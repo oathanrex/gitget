@@ -1,0 +1,82 @@
+{
+    "version": 1,
+    "lastUpdated": "2025-01-15",
+    "categories": [
+        {
+            "id": "dev-tools",
+            "name": "Developer Tools",
+            "icon": "🛠️"
+        },
+        {
+            "id": "productivity",
+            "name": "Productivity",
+            "icon": "📋"
+        },
+        {
+            "id": "utilities",
+            "name": "Utilities",
+            "icon": "🔧"
+        },
+        {
+            "id": "security",
+            "name": "Security",
+            "icon": "🔒"
+        }
+    ],
+    "featured": [
+        {
+            "owner": "microsoft",
+            "repo": "vscode",
+            "displayName": "Visual Studio Code",
+            "description": "Code editing. Redefined.",
+            "category": "dev-tools",
+            "tags": ["editor", "ide", "development"],
+            "priority": 1
+        },
+        {
+            "owner": "obsidianmd",
+            "repo": "obsidian-releases",
+            "displayName": "Obsidian",
+            "description": "A powerful knowledge base on local Markdown files",
+            "category": "productivity",
+            "tags": ["notes", "markdown", "knowledge"],
+            "priority": 2
+        },
+        {
+            "owner": "bitwarden",
+            "repo": "clients",
+            "displayName": "Bitwarden",
+            "description": "Open source password management",
+            "category": "security",
+            "tags": ["passwords", "security", "encryption"],
+            "priority": 3
+        },
+        {
+            "owner": "jgraph",
+            "repo": "drawio-desktop",
+            "displayName": "Draw.io Desktop",
+            "description": "Diagram software for making flowcharts and more",
+            "category": "productivity",
+            "tags": ["diagrams", "flowcharts", "design"],
+            "priority": 4
+        },
+        {
+            "owner": "marktext",
+            "repo": "marktext",
+            "displayName": "Mark Text",
+            "description": "Simple and elegant markdown editor",
+            "category": "productivity",
+            "tags": ["markdown", "editor", "writing"],
+            "priority": 5
+        },
+        {
+            "owner": "godotengine",
+            "repo": "godot",
+            "displayName": "Godot Engine",
+            "description": "Multi-platform 2D and 3D game engine",
+            "category": "dev-tools",
+            "tags": ["gamedev", "engine", "open-source"],
+            "priority": 6
+        }
+    ]
+}

@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Security Headers -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; 
+                   script-src 'self' 'unsafe-eval'; 
+                   style-src 'self'; 
+                   img-src 'self' data: https://avatars.githubusercontent.com; 
+                   connect-src 'self' https://api.github.com; 
+                   font-src 'self'; 
+                   object-src 'none'; 
+                   base-uri 'self'; 
+                   form-action 'self'; 
+                   upgrade-insecure-requests;">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+
+    <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
+
+    <meta name="description"
+        content="GitGet - The simplest way to find and download open-source apps from GitHub. We auto-detect your OS and bring you the right installers instantly, no technical headache required.">
+    <meta name="keywords"
+        content="github desktop apps, open source software downloader, download github releases, software installer, os detection">
+    <meta name="author" content="Oathan Rex">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:title" content="GitGet - Your Friendly GitHub App Store">
+    <meta property="og:description"
+        content="Stop hunting through GitHub release pages. GitGet finds the right installer for your system in one click.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://oathanrex.github.io/gitget/">
+    <meta property="og:image" content="https://oathanrex.github.io/gitget/assets/og-image.png">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://oathanrex.github.io/gitget/">
+    <meta property="twitter:title" content="GitGet - Your Friendly GitHub App Store">
+    <meta property="twitter:description"
+        content="Stop hunting through GitHub release pages. GitGet finds the right installer for your system in one click.">
+    <meta property="twitter:image" content="https://oathanrex.github.io/gitget/assets/og-image.png">
+
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#0d1117" media="(prefers-color-scheme: dark)">
+
+    <title>GitGet | The Simple Way to Download GitHub Apps</title>
+
+    <!-- Favicon (SVG for scalability) -->
+    <link rel="icon" type="image/svg+xml"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230969da' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z'></path><polyline points='3.27 6.96 12 12.01 20.73 6.96'></polyline><line x1='12' y1='22.08' x2='12' y2='12'></line></svg>">
+
+    <link rel="stylesheet" href="css/styles.css">
+
+    <!-- JSON-LD Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "GitGet",
+      "applicationCategory": "UtilitiesApplication",
+      "operatingSystem": "Windows, macOS, Linux, Android, iOS",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "description": "The simplest way to find and download open-source apps from GitHub. Auto-detects your OS and brings you the right installers instantly.",
+      "author": {
+        "@type": "Person",
+        "name": "Oathan Rex",
+        "url": "https://oathanrex.github.io/"
+      },
+      "url": "https://oathanrex.github.io/gitget/",
+      "image": "https://oathanrex.github.io/gitget/assets/og-image.png",
+      "featureList": "OS Detection, Direct GitHub Downloads, No Tracking, Dark Mode"
+    }
+    </script>
+</head>
+
+<body>
+    <div id="app">
+        <!-- Header -->
+        <header class="header" id="header">
+            <div class="header-content">
+                <a href="#/" class="logo">
+                    <span class="logo-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path
+                                d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z">
+                            </path>
+                            <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                            <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                        </svg>
+                    </span>
+                    <span class="logo-text">GitGet</span>
+                </a>
+                <nav class="nav" id="nav">
+                    <a href="#/" class="nav-link active" data-route="home">
+                        <span class="nav-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                                <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                            </svg>
+                        </span>
+                        <span>Home</span>
+                    </a>
+                    <a href="#/library" class="nav-link" data-route="library">
+                        <span class="nav-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                            </svg>
+                        </span>
+                        <span>My Library</span>
+                        <span class="badge hidden" id="update-badge">0</span>
+                    </a>
+                    <button class="nav-link settings-btn" id="open-settings" aria-label="Settings">
+                        <span class="nav-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="3"></circle>
+                                <path
+                                    d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
+                                </path>
+                            </svg>
+                        </span>
+                        <span>Settings</span>
+                    </button>
+                </nav>
+                <div class="header-actions">
+                    <button class="btn-icon" id="theme-toggle" aria-label="Toggle theme">
+                        <span class="theme-icon"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                            </svg></span>
+                    </button>
+                    <button class="btn btn-secondary" id="support-btn">
+                        <span>☕</span>
+                        <span class="btn-text">Support</span>
+                    </button>
+                </div>
+                <button class="mobile-menu-btn" id="mobile-menu-btn" aria-label="Menu">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main" id="main-content">
+            <!-- Home View -->
+            <section class="view active" id="view-home">
+                <div class="hero">
+                    <h1 class="hero-title">Get the Apps You Love, Straight from the Source</h1>
+                    <p class="hero-subtitle">Stop digging through code repositories. We find the right installers for
+                        your system so you can get back to what matters.</p>
+
+                    <!-- Detection Badge -->
+                    <div class="detection-badge" id="detection-badge">
+                        <span class="detection-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                                <line x1="8" y1="21" x2="16" y2="21"></line>
+                                <line x1="12" y1="17" x2="12" y2="21"></line>
+                            </svg>
+                        </span>
+                        <span class="detection-text" id="detection-text">Detecting your system...</span>
+                        <button class="detection-change" id="detection-change">Change</button>
+                    </div>
+
+                    <!-- Search Bar -->
+                    <div class="search-container">
+                        <form class="search-form" id="search-form">
+                            <div class="search-input-wrapper">
+                                <span class="search-icon">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round">
+                                        <circle cx="11" cy="11" r="8"></circle>
+                                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                    </svg>
+                                </span>
+                                <input type="text" class="search-input" id="search-input"
+                                    placeholder="Enter repository (e.g., microsoft/vscode) or paste GitHub URL"
+                                    autocomplete="off" spellcheck="false" aria-label="Search repositories">
+                                <button type="submit" class="search-btn" id="search-btn">
+                                    <span class="search-btn-text">Search</span>
+                                    <span class="search-btn-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16"
+                                            height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                                            <polyline points="12 5 19 12 12 19"></polyline>
+                                        </svg></span>
+                                </button>
+                            </div>
+                        </form>
+                        <div class="search-hints">
+                            <span>Try:</span>
+                            <button class="hint-btn" data-repo="microsoft/vscode">microsoft/vscode</button>
+                            <button class="hint-btn" data-repo="obsidianmd/obsidian-releases">obsidian</button>
+                            <button class="hint-btn" data-repo="bitwarden/clients">bitwarden</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Search Results -->
+                <div class="results-container hidden" id="results-container">
+                    <div class="results-header">
+                        <h2 class="results-title" id="results-title">Search Results</h2>
+                        <button class="btn btn-secondary" id="clear-results">Clear</button>
+                    </div>
+                    <div class="results-content" id="results-content">
+                        <!-- Dynamic content -->
+                    </div>
+                </div>
+
+                <!-- Featured Apps -->
+                <div class="featured-container" id="featured-container">
+                    <h2 class="section-title">Featured Apps</h2>
+                    <div class="featured-grid" id="featured-grid">
+                        <!-- Dynamic content -->
+                    </div>
+                </div>
+
+                <!-- Rate Limit Warning -->
+                <div class="rate-limit-warning hidden" id="rate-limit-warning">
+                    <span class="warning-icon">⚠️</span>
+                    <span class="warning-text">Wait a moment! You're searching quite fast. <span
+                            id="rate-limit-remaining">0</span>
+                        requests remaining for now.</span>
+                </div>
+
+                <!-- Info Section for SEO/AdSense -->
+                <div class="info-sections">
+                    <section class="info-card">
+                        <h2 class="section-title">Why use GitGet?</h2>
+                        <div class="featured-grid">
+                            <div class="app-card">
+                                <h3><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round">
+                                        <path
+                                            d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z">
+                                        </path>
+                                        <path d="M12 15l-3-3a22 22 0 0 1 2-12 22.16 22.16 0 0 1 9 9 22 22 0 0 1-8 6z">
+                                        </path>
+                                        <path d="M5 20l7-5"></path>
+                                    </svg> No More Release Hunting</h3>
+                                <p>Tired of scrolling through dozens of files in a "Release" tab just to find the right
+                                    installer? GitGet identifies your system and highlights exactly what you need,
+                                    instantly.</p>
+                            </div>
+                            <div class="app-card">
+                                <h3><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round">
+                                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                                    </svg> Pure & Authentic</h3>
+                                <p>We value your security. GitGet doesn't host any files; every download link comes
+                                    straight from the official GitHub servers, so you're always getting the real deal
+                                    from the developers.</p>
+                            </div>
+                            <div class="app-card">
+                                <h3><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round">
+                                        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                                    </svg> Lightweight & Fast</h3>
+                                <p>No sign-ups, no tracking, and zero bloat. We've built GitGet to be as fast as
+                                    possible so you can find your tools and get back to work without any distractions.
+                                </p>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="info-card faq-section">
+                        <h2 class="section-title">Frequently Asked Questions</h2>
+                        <div class="featured-grid">
+                            <div class="app-card">
+                                <h4>Is GitGet safe to use?
+                                </h4>
+                                <p>Absolutely. Think of us as a bridge, not a warehouse. When you click download, your
+                                    browser talks directly to GitHub. We never touch your files or your data.</p>
+                            </div>
+                            <div class="app-card">
+                                <h4>How does it detect my
+                                    system?</h4>
+                                <p>We use standard browser info to guess your OS (Windows, macOS, or Linux). If we're
+                                    off, you can easily switch it manually using the badge at the top!</p>
+                            </div>
+                            <div class="app-card">
+                                <h4>Is this service free?
+                                </h4>
+                                <p>Yes, GitGet is 100% free and open-source. It's built by the community, for the
+                                    community, to make great software accessible to everyone.</p>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </section>
+
+            <!-- Library View -->
+            <section class="view" id="view-library">
+                <div class="library-header">
+                    <h1 class="library-title">My Library</h1>
+                    <div class="library-actions">
+                        <button class="btn btn-secondary" id="check-updates-btn">
+                            <span class="icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                    stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="23 4 23 10 17 10"></polyline>
+                                    <polyline points="1 20 1 14 7 14"></polyline>
+                                    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15">
+                                    </path>
+                                </svg></span>
+                            <span>Check Updates</span>
+                        </button>
+                        <button class="btn btn-secondary" id="export-library-btn">
+                            <span>📤</span>
+                            <span>Export</span>
+                        </button>
+                        <button class="btn btn-secondary" id="import-library-btn">
+                            <span>📥</span>
+                            <span>Import</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="library-stats" id="library-stats">
+                    <div class="stat">
+                        <span class="stat-value" id="stat-total">0</span>
+                        <span class="stat-label">Apps</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-value" id="stat-updates">0</span>
+                        <span class="stat-label">Updates</span>
+                    </div>
+                </div>
+
+                <div class="library-filters">
+                    <button class="filter-btn active" data-filter="all">All</button>
+                    <button class="filter-btn" data-filter="updates">Updates Available</button>
+                </div>
+
+                <div class="library-content" id="library-content">
+                    <div class="library-empty" id="library-empty">
+                        <span class="empty-icon">📚</span>
+                        <h3>Your library is waiting!</h3>
+                        <p>Keep your favorite tools organized in one place. Search for an app and click "Track for
+                            Updates" to see them appear here.</p>
+                        <a href="#/" class="btn btn-primary">Start Discovering</a>
+                    </div>
+                    <div class="library-list" id="library-list">
+                        <!-- Dynamic content -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- App Detail View -->
+            <section class="view" id="view-detail">
+                <div class="detail-content" id="detail-content">
+                    <!-- Dynamic content -->
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer-content">
+                <div class="footer-info">
+                    <p>Built with ❤️ by <a href="https://oathanrex.github.io/" target="_blank"
+                            rel="noopener noreferrer">Oathan
+                            Rex</a></p>
+                    <p class="footer-disclaimer">GitGet does not host any files. All downloads are served directly from
+                        GitHub.</p>
+                </div>
+                <div class="footer-links">
+                    <a href="https://github.com/oathanrex/gitget" target="_blank" rel="noopener noreferrer">
+                        <span><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                fill="currentColor" stroke="none">
+                                <polygon
+                                    points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2">
+                                </polygon>
+                            </svg></span> Star on GitHub
+                    </a>
+                    <a href="https://www.buymeacoffee.com/oathanrex" target="_blank" rel="noopener noreferrer"
+                        class="bmc-link">
+                        <span><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <path d="M18 8h1a4 4 0 0 1 0 8h-1"></path>
+                                <path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"></path>
+                                <line x1="6" y1="1" x2="6" y2="4"></line>
+                                <line x1="10" y1="1" x2="10" y2="4"></line>
+                                <line x1="14" y1="1" x2="14" y2="4"></line>
+                            </svg></span> Buy Me a Coffee
+                    </a>
+                </div>
+                <div class="footer-api-status" id="footer-api-status">
+                    <span class="api-dot"></span>
+                    <span>API: <span id="api-remaining">60</span>/60 requests</span>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Modals -->
+    <div class="modal-overlay hidden" id="modal-overlay">
+        <!-- Support Modal -->
+        <div class="modal hidden" id="support-modal">
+            <div class="modal-header">
+                <h2 class="modal-title">Support GitGet</h2>
+                <button class="modal-close" data-close-modal>&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>GitGet is free and open source. If it saves you time, consider supporting its development.</p>
+                <a href="https://www.buymeacoffee.com/oathanrex" target="_blank" rel="noopener noreferrer"
+                    class="bmc-button">
+                    <span class="bmc-icon"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M18 8h1a4 4 0 0 1 0 8h-1"></path>
+                            <path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"></path>
+                            <line x1="6" y1="1" x2="6" y2="4"></line>
+                            <line x1="10" y1="1" x2="10" y2="4"></line>
+                            <line x1="14" y1="1" x2="14" y2="4"></line>
+                        </svg></span>
+                    <span>Buy Me a Coffee</span>
+                </a>
+                <div class="support-alternatives">
+                    <h4>Other ways to support:</h4>
+                    <ul>
+                        <li><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                                fill="currentColor" stroke="none">
+                                <polygon
+                                    points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2">
+                                </polygon>
+                            </svg> Star the repository on GitHub</li>
+                        <li><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <path
+                                    d="M12 2c0 4.97-3.85 9-8.6 9c4.75 0 8.6 4.03 8.6 9c0-4.97 3.85-9 8.6-9c-4.75 0-8.6-4.03-8.6-9">
+                                </path>
+                            </svg> Report bugs and suggest features</li>
+                        <li><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
+                                <polyline points="16 6 12 2 8 6"></polyline>
+                                <line x1="12" y1="2" x2="12" y2="15"></line>
+                            </svg> Share GitGet with others</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- OS Override Modal -->
+        <div class="modal hidden" id="os-modal">
+            <div class="modal-header">
+                <h2 class="modal-title">Select Your System</h2>
+                <button class="modal-close" data-close-modal>&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="os-selector">
+                    <label class="selector-label">Operating System</label>
+                    <div class="os-options" id="os-options" role="radiogroup" aria-label="Select Operating System">
+                        <button class="os-option" data-os="windows" role="radio" aria-pressed="false">
+                            <span class="os-icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                    stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M20 6L9 17l-5-5"></path>
+                                </svg></span>
+                            <!-- Using Check for now, or just Windows generic? Let's use Grid/Layout for Windows -->
+                            <!-- Providing specific OS icons -->
+                            <!-- Windows -->
+                            <span>Windows</span>
+                            <span class="os-icon-visual"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                    stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                    <line x1="3" y1="12" x2="21" y2="12"></line>
+                                    <line x1="12" y1="3" x2="12" y2="21"></line>
+                                </svg></span>
+                        </button>
+                        <button class="os-option" data-os="macos" role="radio" aria-pressed="false">
+                            <!-- Apple -->
+                            <span>macOS</span>
+                            <span class="os-icon-visual"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                    stroke-linecap="round" stroke-linejoin="round">
+                                    <path
+                                        d="M12 20.94c1.5 0 2.75 1.06 4 1.06 3 0 6-8 6-12.22A4.91 4.91 0 0 0 17 5c-2.22 0-4 1.44-5 2-1-.56-2.78-2-5-2a4.9 4.9 0 0 0-5 4.78C2 14 5 22 8 22c1.25 0 2.5-1.06 4-1.06Z">
+                                    </path>
+                                    <path d="M10 2c1 .5 2 2 2 5"></path>
+                                </svg></span>
+                        </button>
+                        <button class="os-option" data-os="linux" role="radio" aria-pressed="false">
+                            <!-- Linux (Terminal/Tux approximation) -->
+                            <span>Linux</span>
+                            <span class="os-icon-visual"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                    stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M12 19a7 7 0 0 0 5-7c0-3.87-3.13-7-7-7s-7 3.13-7 7a7 7 0 0 0 5 7Z"></path>
+                                    <path d="M12 5V2"></path>
+                                    <path d="M12 22v-3"></path>
+                                </svg></span>
+                        </button>
+                        <button class="os-option" data-os="android" role="radio" aria-pressed="false">
+                            <!-- Android -->
+                            <span>Android</span>
+                            <span class="os-icon-visual"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                    stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
+                                    <line x1="12" y1="18" x2="12.01" y2="18"></line>
+                                </svg></span>
+                        </button>
+                        <button class="os-option" data-os="ios" role="radio" aria-pressed="false">
+                            <!-- iOS -->
+                            <span>iOS</span>
+                            <span class="os-icon-visual"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                    stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
+                                    <line x1="12" y1="18" x2="12.01" y2="18"></line>
+                                </svg></span>
+                        </button>
+                    </div>
+                </div>
+                <div class="arch-selector">
+                    <label class="selector-label">Architecture</label>
+                    <div class="arch-options" id="arch-options" role="radiogroup" aria-label="Select Architecture">
+                        <button class="arch-option" data-arch="x64" role="radio" aria-pressed="false">x64
+                            (64-bit)</button>
+                        <button class="arch-option" data-arch="x86" role="radio" aria-pressed="false">x86
+                            (32-bit)</button>
+                        <button class="arch-option" data-arch="arm64" role="radio" aria-pressed="false">ARM64</button>
+                        <button class="arch-option" data-arch="arm" role="radio" aria-pressed="false">ARM</button>
+                    </div>
+                    <div class="arch-special-options">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="show-all-arch" />
+                            <span>Show all architecture variants</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button class="btn btn-secondary" id="reset-detection">Reset to Auto-Detect</button>
+                    <button class="btn btn-primary" id="apply-os-selection">Apply</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Import Modal -->
+        <div class="modal hidden" id="import-modal">
+            <div class="modal-header">
+                <h2 class="modal-title">Import Library</h2>
+                <button class="modal-close" data-close-modal>&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Paste your exported library JSON below:</p>
+                <textarea class="import-textarea" id="import-textarea" placeholder='{"version":1,"apps":[...]}'
+                    aria-label="Paste exported library JSON here"></textarea>
+                <div class="modal-actions">
+                    <button class="btn btn-secondary" data-close-modal>Cancel</button>
+                    <button class="btn btn-primary" id="confirm-import">Import</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings Modal -->
+        <div class="modal hidden" id="settings-modal">
+            <div class="modal-header">
+                <h2 class="modal-title">Settings</h2>
+                <button class="modal-close" data-close-modal>&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="settings-section">
+                    <h3>
+                        <span class="icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18"
+                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round">
+                                <path
+                                    d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4">
+                                </path>
+                            </svg></span>
+                        GitHub API Token
+                    </h3>
+                    <p class="settings-desc">Add a Personal Access Token to increase API limit from 60 to 5000
+                        requests/hour.</p>
+                    <div class="token-input-wrapper">
+                        <input type="password" id="github-token" class="input-field" placeholder="ghp_xxxxxxxxxxxx"
+                            aria-label="GitHub Personal Access Token">
+                        <button class="btn btn-primary" id="save-token">Save</button>
+                    </div>
+                    <div class="token-status hidden" id="token-status">
+                        <span class="status-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg></span>
+                        Token saved
+                        <button class="btn-text danger" id="clear-token">Remove</button>
+                    </div>
+                    <p class="help-text">
+                        <small>Generate a token (no scopes needed) at <a href="https://github.com/settings/tokens"
+                                target="_blank" rel="noopener">github.com/settings/tokens</a></small>
+                    </p>
+                </div>
+
+                <div class="settings-section">
+                    <h3>Cache Management</h3>
+                    <p class="settings-desc">Clear local cache to force fresh data fetch.</p>
+                    <button class="btn btn-secondary" id="clear-cache">Clear App Cache</button>
+                </div>
+
+                <div class="modal-actions">
+                    <button class="btn btn-secondary" data-close-modal>Close</button>
+                </div>
+            </div>
+        </div>
+
+
+
+
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay hidden" id="loading-overlay">
+        <div class="loading-spinner"></div>
+        <p class="loading-text">Loading...</p>
+    </div>
+
+    <!-- Core & Config -->
+    <script src="js/config/constants.js"></script>
+    <script src="js/utils/messages.js"></script>
+    <script src="js/utils/icons.js"></script>
+
+    <!-- Services -->
+    <script src="js/services/detection.js"></script>
+    <script src="js/services/matching.js"></script>
+    <script src="js/services/storage.js"></script>
+    <script src="js/services/github.js"></script>
+    <script src="js/router.js"></script>
+
+    <!-- Components -->
+    <script src="js/components/modal.js"></script>
+    <script src="js/components/toast.js"></script>
+    <script src="js/components/header.js"></script>
+    <script src="js/components/search.js"></script>
+    <script src="js/components/app-card.js"></script>
+    <script src="js/components/app-detail.js"></script>
+    <script src="js/components/library.js"></script>
+    <script src="js/components/offline.js"></script>
+    <script src="js/components/keyboard.js"></script>
+
+    <!-- Main App -->
+    <script src="js/app.js"></script>
+</body>
+
+</html>
