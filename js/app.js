@@ -1,615 +1,107 @@
-/**
- * GitGet - Main Application
- * 
- * Orchestrates the initialization and coordination of components.
- */
-
-const App = (() => {
-    'use strict';
-
-    /**
-     * Featured Apps Component
-     * (Kept internal to App for now, could be extracted later)
-     */
-    const Featured = {
-        // Featured apps list
-        apps: [
-            {
-                owner: 'microsoft',
-                repo: 'vscode',
-                displayName: 'Visual Studio Code',
-                description: 'Code editing. Redefined.',
-                tags: ['editor', 'ide', 'development']
-            },
-            {
-                owner: 'obsidianmd',
-                repo: 'obsidian-releases',
-                displayName: 'Obsidian',
-                description: 'A powerful knowledge base that works on local Markdown files.',
-                tags: ['notes', 'markdown', 'productivity']
-            },
-            {
-                owner: 'bitwarden',
-                repo: 'clients',
-                displayName: 'Bitwarden',
-                description: 'Open source password management solutions.',
-                tags: ['security', 'passwords', 'encryption']
-            },
-            {
-                owner: 'jgraph',
-                repo: 'drawio-desktop',
-                displayName: 'Draw.io Desktop',
-                description: 'Official electron build of draw.io',
-                tags: ['diagrams', 'design', 'productivity']
-            },
-            {
-                owner: 'notable',
-                repo: 'notable',
-                displayName: 'Notable',
-                description: 'The Markdown-based note-taking app that doesn\'t suck.',
-                tags: ['notes', 'markdown', 'productivity']
-            },
-            {
-                owner: 'marktext',
-                repo: 'marktext',
-                displayName: 'Mark Text',
-                description: 'A simple and elegant markdown editor.',
-                tags: ['markdown', 'editor', 'writing']
-            }
-        ],
-
-        /**
-         * Render featured apps with error handling
-         */
-        async render() {
-            const grid = document.getElementById('featured-grid');
-            if (!grid) return;
-
-            grid.innerHTML = '<div class="loading">Loading featured apps...</div>';
-
-            try {
-                // Get system detection once
-                const detection = await DetectionService.detect();
-
-                // Fetch all apps in parallel dealing with failures gracefully
-                const results = await Promise.allSettled(
-                    this.apps.map(app =>
-                        GitHubService.getAppInfo(app.owner, app.repo)
-                            .then(appInfo => ({ app, appInfo, detection }))
-                    )
-                );
-
-                grid.innerHTML = '';
-
-                const successful = results.filter(r => r.status === 'fulfilled');
-                const failed = results.filter(r => r.status === 'rejected');
-
-                if (successful.length === 0 && failed.length > 0) {
-                    throw new Error('All featured apps failed to load');
-                }
-
-                successful.forEach(({ value }) => {
-                    // Only show apps that have releases
-                    if (value.appInfo.hasRelease) {
-                        // Use AppCard component if available
-                        if (typeof AppCard !== 'undefined' && AppCard.create) {
-                            const card = AppCard.create(value.appInfo, value.detection);
-                            grid.appendChild(card);
-                        } else {
-                            // Fallback rendering
-                            this.renderFallback(grid, value.appInfo, value.app);
-                        }
-                    } else {
-                        console.warn(`No releases found for ${value.app.displayName}`);
-                    }
-                });
-
-                if (failed.length > 0) {
-                    console.warn(`Failed to load ${failed.length} featured apps`, failed);
-                    // Could show partial error toast if needed
-                }
-
-            } catch (error) {
-                console.error('Fatal error rendering featured apps:', error);
-
-                // Determine user-friendly error message
-                let userMessage = ErrorMessages.NETWORK.GENERIC;
-                let isAuthError = false;
-
-                if (error.name === 'RateLimitError') {
-                    userMessage = `API Rate Limit Exceeded. Please wait until ${error.resetTime ? error.resetTime.toLocaleTimeString() : 'later'} or use a token.`;
-                } else if (error.name === 'NetworkError') {
-                    userMessage = 'Please check your internet connection.';
-                } else if (error.name === 'APIError' && error.message.includes('Bad credentials')) {
-                    userMessage = 'Invalid GitHub Token. Please check your settings.';
-                    isAuthError = true;
-                } else if (error.message) {
-                    userMessage = error.message;
-                }
-
-                grid.innerHTML = `
-                    <div class="error-message">
-                        <span class="error-icon">⚠️</span>
-                        <p>${userMessage}</p>
-                        <div class="error-actions">
-                            ${isAuthError ?
-                        `<button id="btn-update-token" class="btn-primary">Update Token</button>` :
-                        `<button id="btn-retry" class="btn-secondary">Retry</button>`
-                    }
-                            <button id="btn-reset" class="btn-text danger reset-btn-emergency">
-                                ⚠️ Reset App Data (Fix Crash)
-                            </button>
-                        </div>
-                    </div>
-                `;
-
-                // Add event listeners (CSP safe)
-                setTimeout(() => {
-                    const btnUpdate = document.getElementById('btn-update-token');
-                    if (btnUpdate) {
-                        btnUpdate.addEventListener('click', () => document.getElementById('open-settings').click());
-                    }
-
-                    const btnRetry = document.getElementById('btn-retry');
-                    if (btnRetry) {
-                        btnRetry.addEventListener('click', () => window.location.reload());
-                    }
-
-                    const btnReset = document.getElementById('btn-reset');
-                    if (btnReset) {
-                        btnReset.addEventListener('click', () => {
-                            localStorage.clear();
-                            sessionStorage.clear();
-                            window.location.reload();
-                        });
-                    }
-                }, 0);
-            }
-        },
-
-        // Fallback renderer if AppCard.create is not available yet
-        renderFallback(container, appInfo, meta) {
-            const div = document.createElement('div');
-            div.className = 'featured-card';
-            div.innerHTML = `
-                <h3>${meta.displayName}</h3>
-                <p>${meta.description}</p>
-            `;
-            container.appendChild(div);
-        }
-    };
-
-    /**
-     * OS Selection Modal Component
-     * (Kept internal for now)
-     */
-    const OSModal = {
-        selectedOS: null,
-        selectedArch: null,
-
-        init() {
-            this.setupTrigger();
-            this.setupOptions();
-            this.setupActions();
-        },
-
-        setupTrigger() {
-            document.getElementById('detection-change')?.addEventListener('click', () => {
-                this.open();
-            });
-        },
-
-        async open() {
-            try {
-                const detection = await DetectionService.detect();
-                this.selectedOS = detection.os;
-                this.selectedArch = detection.arch;
-                this.updateSelection();
-
-                // Wait for DOM update before opening modal
-                await new Promise(resolve => requestAnimationFrame(resolve));
-
-                if (typeof Modal !== 'undefined') {
-                    Modal.open('os-modal');
-                }
-            } catch (error) {
-                console.error('Failed to open OS modal:', error);
-
-                // Fallback to defaults
-                this.selectedOS = 'windows';
-                this.selectedArch = 'x64';
-                this.updateSelection();
-
-                if (typeof Modal !== 'undefined') {
-                    Modal.open('os-modal');
-                }
-
-                if (typeof Toast !== 'undefined') {
-                    Toast.show('Using default system detection', 'warning');
-                }
-            }
-        },
-
-        setupOptions() {
-            // OS options
-            document.querySelectorAll('.os-option').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    this.selectedOS = btn.dataset.os;
-                    this.updateSelection();
-                });
-            });
-
-            // Arch options
-            document.querySelectorAll('.arch-option').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    this.selectedArch = btn.dataset.arch;
-                    // Uncheck "show all" if specific arch selected
-                    const showAllCheckbox = document.getElementById('show-all-arch');
-                    if (showAllCheckbox) showAllCheckbox.checked = false;
-                    this.updateSelection();
-                });
-            });
-
-            // Show All Architectures checkbox
-            let pendingDetection = null;
-            document.getElementById('show-all-arch')?.addEventListener('change', async (e) => {
-                // Cancel pending operation
-                if (pendingDetection) {
-                    pendingDetection.cancelled = true;
-                }
-
-                if (e.target.checked) {
-                    this.selectedArch = 'all';  // Special value
-                    // Deselect all arch buttons
-                    document.querySelectorAll('.arch-option').forEach(btn => {
-                        btn.classList.remove('selected');
-                        btn.setAttribute('aria-pressed', 'false');
-                    });
-                } else {
-                    // Create cancellable operation
-                    pendingDetection = { cancelled: false };
-                    const operation = pendingDetection;
-
-                    try {
-                        const detection = await DetectionService.detect();
-
-                        // Check if still valid
-                        if (!operation.cancelled) {
-                            this.selectedArch = detection.arch;
-                            this.updateSelection();
-                        }
-                    } catch (error) {
-                        console.error('Failed to detect architecture:', error);
-                        if (typeof Toast !== 'undefined') {
-                            Toast.show('Detection failed, using x64', 'error');
-                        }
-                        this.selectedArch = 'x64';
-                        this.updateSelection();
-                    } finally {
-                        if (pendingDetection === operation) {
-                            pendingDetection = null;
-                        }
-                    }
-                }
-            });
-        },
-
-        setupActions() {
-            // Reset
-            document.getElementById('reset-detection')?.addEventListener('click', async () => {
-                await DetectionService.clearOverride();
-                await this.updateDetectionBadge();
-                if (typeof Modal !== 'undefined') Modal.closeAll();
-                if (typeof Toast !== 'undefined') Toast.show('Reset to auto-detect', 'success');
-            });
-
-            // Apply
-            document.getElementById('apply-os-selection')?.addEventListener('click', async () => {
-                // Validation - ensure both selections are made
-                if (!this.selectedOS || !this.selectedArch) {
-                    if (typeof Toast !== 'undefined') {
-                        Toast.show('Please select both OS and architecture', 'error');
-                    }
-                    return;
-                }
-
-                DetectionService.setOverride(this.selectedOS, this.selectedArch);
-                await this.updateDetectionBadge();
-                if (typeof Modal !== 'undefined') Modal.closeAll();
-                if (typeof Toast !== 'undefined') Toast.show('System selection updated', 'success');
-            });
-        },
-
-        updateSelection() {
-            // Update OS buttons
-            document.querySelectorAll('.os-option').forEach(btn => {
-                btn.classList.toggle('selected', btn.dataset.os === this.selectedOS);
-                // Accessibility
-                btn.setAttribute('aria-pressed', btn.dataset.os === this.selectedOS);
-            });
-
-            // Update arch buttons
-            document.querySelectorAll('.arch-option').forEach(btn => {
-                btn.classList.toggle('selected', btn.dataset.arch === this.selectedArch);
-                btn.setAttribute('aria-pressed', btn.dataset.arch === this.selectedArch);
-            });
-        },
-
-        async updateDetectionBadge() {
-            const detection = await DetectionService.detect();
-            const badge = document.getElementById('detection-text');
-            const badgeContainer = document.getElementById('detection-badge');
-            const icon = document.querySelector('.detection-icon');
-
-            if (badge) {
-                badge.textContent = detection.fullDisplay;
-                if (detection.isOverride) {
-                    badge.textContent += ' (manual)';
-                }
-            }
-
-            // Add visual indicator for override mode
-            if (badgeContainer) {
-                badgeContainer.classList.toggle('override-active', detection.isOverride);
-            }
-
-            if (icon) {
-                icon.innerHTML = detection.icon; // Use innerHTML for SVG
-            }
-        }
-    };
-
-    /**
-     * Settings Modal Component
-     */
-    const SettingsModal = {
-        init() {
-            this.setupTrigger();
-            this.setupActions();
-        },
-
-        setupTrigger() {
-            document.getElementById('open-settings')?.addEventListener('click', () => {
-                this.open();
-            });
-        },
-
-        open() {
-            this.updateTokenStatus();
-            if (typeof Modal !== 'undefined') {
-                Modal.open('settings-modal');
-            }
-        },
-
-        updateTokenStatus() {
-            const hasToken = GitHubService.hasToken();
-            const inputWrapper = document.querySelector('.token-input-wrapper');
-            const statusDiv = document.getElementById('token-status');
-            const input = document.getElementById('github-token');
-
-            if (hasToken) {
-                inputWrapper?.classList.add('hidden');
-                statusDiv?.classList.remove('hidden');
-            } else {
-                inputWrapper?.classList.remove('hidden');
-                statusDiv?.classList.add('hidden');
-                if (input) input.value = '';
-            }
-        },
-
-        setupActions() {
-            // Save Token
-            document.getElementById('save-token')?.addEventListener('click', () => {
-                const input = document.getElementById('github-token');
-                const token = input?.value.trim();
-
-                if (token) {
-                    GitHubService.setToken(token);
-                    this.updateTokenStatus();
-                    if (typeof Toast !== 'undefined') {
-                        Toast.show('Token saved! Reloading...', 'success');
-                    }
-                    // Force reload to apply changes immediately and clear any stuck states
-                    setTimeout(() => window.location.reload(), 1000);
-                } else {
-                    if (typeof Toast !== 'undefined') {
-                        Toast.show('Please enter a valid token', 'error');
-                    }
-                }
-            });
-
-            // Clear Token
-            document.getElementById('clear-token')?.addEventListener('click', () => {
-                GitHubService.setToken(null);
-                this.updateTokenStatus();
-                if (typeof Toast !== 'undefined') {
-                    Toast.show('Token removed', 'info');
-                }
-            });
-
-            // Clear Cache
-            document.getElementById('clear-cache')?.addEventListener('click', () => {
-                GitHubService.clearCache();
-                if (typeof MatchingService !== 'undefined') {
-                    MatchingService.clearCache();
-                }
-                if (typeof Toast !== 'undefined') {
-                    Toast.show('App cache cleared', 'success');
-                }
-            });
-        }
-    };
-
-    /**
-     * Render static icons
-     */
-    function renderStaticIcons() {
-        if (typeof Icons === 'undefined') return;
-
-        // Search
-        const searchIcon = document.querySelector('.search-icon');
-        if (searchIcon) searchIcon.innerHTML = Icons.get('search', 'icon-lg');
-
-        const searchBtnIcon = document.querySelector('.search-btn-icon');
-        if (searchBtnIcon) searchBtnIcon.innerHTML = Icons.get('arrowRight', 'icon-md');
-
-        // Modal OS Options
-        const winIcon = document.querySelector('.os-option[data-os="windows"] .os-icon');
-        if (winIcon) winIcon.innerHTML = Icons.get('windows', 'icon-lg');
-
-        const macIcon = document.querySelector('.os-option[data-os="macos"] .os-icon');
-        if (macIcon) macIcon.innerHTML = Icons.get('apple', 'icon-lg');
-
-        const linuxIcon = document.querySelector('.os-option[data-os="linux"] .os-icon');
-        if (linuxIcon) linuxIcon.innerHTML = Icons.get('linux', 'icon-lg');
-
-        const androidIcon = document.querySelector('.os-option[data-os="android"] .os-icon');
-        if (androidIcon) androidIcon.innerHTML = Icons.get('android', 'icon-lg');
-
-        const iosIcon = document.querySelector('.os-option[data-os="ios"] .os-icon');
-        if (iosIcon) iosIcon.innerHTML = Icons.get('mobile', 'icon-lg');
-
-        // Empty States
-        const libEmpty = document.querySelector('.library-empty .empty-icon');
-        if (libEmpty) libEmpty.innerHTML = Icons.get('package', 'icon-xl');
-
-        // Buttons & Alerts
-        const exportBtn = document.querySelector('#export-library-btn span:first-child');
-        if (exportBtn) exportBtn.innerHTML = Icons.get('upload', 'icon-sm');
-
-        const importBtn = document.querySelector('#import-library-btn span:first-child');
-        if (importBtn) importBtn.innerHTML = Icons.get('import', 'icon-sm');
-
-        const warningIcon = document.querySelector('.warning-icon');
-        if (warningIcon) warningIcon.innerHTML = Icons.get('alert', 'icon-md');
-
-        // Nav Icons
-        const settingsIcon = document.querySelector('.settings-btn .nav-icon');
-        if (settingsIcon) settingsIcon.innerHTML = Icons.get('settings', 'icon-md'); // Assuming settings icon exists or fallback
-
-        // Footer & Modals
-        const footerStar = document.querySelector('.footer-links a[href*="github"] span');
-        if (footerStar) footerStar.innerHTML = Icons.get('star', 'icon-sm');
-
-        const footerCoffee = document.querySelector('.footer-links a[href*="coffee"] span');
-        if (footerCoffee) footerCoffee.innerHTML = Icons.get('heart', 'icon-sm');
-
-        const modalCoffee = document.querySelector('.bmc-icon');
-        if (modalCoffee) modalCoffee.innerHTML = Icons.get('heart', 'icon-md');
-
-        // Detection Badge Initial
-        const detectionIcon = document.querySelector('.detection-icon');
-        if (detectionIcon) detectionIcon.innerHTML = Icons.get('monitor', 'icon-lg');
-    }
-
-    /**
-     * Initialize Application
-     */
-    async function init() {
-        console.log('Initializing GitGet...');
-
-        try {
-            renderStaticIcons();
-
-            // Initialize components
-            // Check existence before init to be safe
-            if (typeof Toast !== 'undefined') Toast.init();
-            if (typeof Modal !== 'undefined') Modal.init();
-            if (typeof Header !== 'undefined') Header.init();
-            if (typeof Search !== 'undefined') Search.init();
-            if (typeof Library !== 'undefined') Library.init();
-            if (typeof Offline !== 'undefined') Offline.init();
-            if (typeof Keyboard !== 'undefined') Keyboard.init();
-
-            OSModal.init();
-            SettingsModal.init();
-
-            // Setup routes
-            setupRoutes();
-
-            // Initialize router
-            if (typeof Router !== 'undefined') Router.init();
-
-            // Load featured apps
-            await Featured.render();
-
-            // Update detection badge
-            await OSModal.updateDetectionBadge();
-
-            // Check for updates in library
-            checkLibraryUpdates();
-
-            console.log('GitGet initialized successfully');
-
-        } catch (error) {
-            console.error('Initialization failed:', error);
-            // Emergency fallback UI could go here
-        }
-    }
-
-    function setupRoutes() {
-        if (typeof Router === 'undefined') return;
-
-        // Home route
-        Router.register('/', () => {
-            setActiveView('view-home');
-            // Re-render featured if empty (optional optimization)
-        });
-
-        // Library route
-        Router.register('/library', () => {
-            setActiveView('view-library');
-            if (typeof Library !== 'undefined') Library.render();
-        });
-
-        // App detail route
-        Router.register('/app/:owner/:repo', (params) => {
-            setActiveView('view-detail');
-            if (typeof AppDetail !== 'undefined') {
-                AppDetail.render(params.owner, params.repo);
-            }
-        });
-    }
-
-    function setActiveView(viewId) {
-        // Hide all views
-        document.querySelectorAll('.view').forEach(view => {
-            view.classList.remove('active');
-            view.setAttribute('aria-hidden', 'true');
-        });
-
-        // Show target view
-        const view = document.getElementById(viewId);
-        if (view) {
-            view.classList.add('active');
-            view.setAttribute('aria-hidden', 'false');
-            window.scrollTo(0, 0);
-        }
-    }
-
-    function checkLibraryUpdates() {
-        if (typeof StorageService === 'undefined' || typeof Header === 'undefined') return;
-
-        try {
-            const library = StorageService.getLibrary();
-            if (library && Array.isArray(library.apps)) {
-                const updatesCount = library.apps.filter(a => a.hasUpdate).length;
-                Header.updateBadge(updatesCount);
-            }
-        } catch (error) {
-            console.warn('Failed to check library updates:', error);
-        }
-    }
-
-    // Public API
-    return Object.freeze({
-        init
-    });
-})();
-
-// Initialize app when DOM is ready
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => App.init());
-} else {
-    App.init();
+import {detect,saveSys,clearSys,LABEL,ARCHL} from './detect.js';
+import {pick,fmt} from './match.js';
+import * as api from './api.js';
+import {lib,setLib,get,set} from './store.js';
+const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>[...r.querySelectorAll(s)];
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>'&#'+c.charCodeAt(0)+';');
+const av=f=>`https://avatars.githubusercontent.com/${f.split('/')[0]}?s=80`;
+const FEAT=[['VSCodium/vscodium','Code editor, no telemetry'],['obsidianmd/obsidian-releases','Notes & knowledge base'],['localsend/localsend','Share files nearby'],['ShareX/ShareX','Screen capture'],['obsproject/obs-studio','Recording & streaming'],['jgraph/drawio-desktop','Diagrams'],['balena-io/etcher','Flash OS images'],['bitwarden/clients','Password manager']];
+const main=$('#main'),dlg=$('#dlg');let sys,rt=0;
+const toast=(m,e)=>{const t=document.createElement('div');t.className='toast'+(e?' err':'');t.setAttribute('role',e?'alert':'status');t.textContent=m;$('#toasts').append(t);setTimeout(()=>t.remove(),4500)};
+const copy=async(t,m='Copied')=>{try{await navigator.clipboard.writeText(t);toast(m)}catch{toast('Copy blocked by the browser — select the text manually.',1)}};
+const sysText=()=>LABEL[sys.os]+' · '+ARCHL[sys.arch];
+const paintSys=()=>{$('#sys').textContent=sysText()};
+const modal=(t,b,m)=>{dlg.innerHTML=`<form method="dialog" class="dh"><h2>${t}</h2><button class="x" aria-label="Close">×</button></form><div class="db">${b}</div>`;m&&m();dlg.showModal()};
+dlg.addEventListener('click',e=>{if(e.target===dlg)dlg.close()});
+const seg=(id,vals,L,cur)=>`<div class="seg" id="${id}">${vals.map(v=>`<button type="button" data-v="${v}" aria-pressed="${v===cur}">${esc(L?L[v]:v)}</button>`).join('')}</div>`;
+const segBind=(id,fn)=>{$('#'+id,dlg).onclick=e=>{const b=e.target.closest('button');if(!b)return;fn(b.dataset.v);$$('button',e.currentTarget).forEach(x=>x.setAttribute('aria-pressed',x===b))}};
+function sysDlg(){let {os,arch}=sys;
+  modal('Your system',`<p class="mut">Downloads are matched to this.</p><h3>Operating system</h3>${seg('os',Object.keys(LABEL),LABEL,os)}<h3>CPU</h3>${seg('ar',['x64','arm64','x86','arm'],ARCHL,arch)}<div class="row"><button class="btn" id="auto">Auto-detect</button><button class="btn pri" id="ok">Apply</button></div>`,()=>{
+    segBind('os',v=>os=v);segBind('ar',v=>arch=v);
+    $('#auto',dlg).onclick=async()=>{clearSys();sys=await detect();paintSys();dlg.close();route()};
+    $('#ok',dlg).onclick=()=>{sys={os,arch};saveSys(sys);paintSys();dlg.close();route()}})}
+function theme(v){document.documentElement.dataset.theme=v==='auto'?'':v;set('gg.theme',v)}
+function cfg(){const th=get('gg.theme','auto');
+  modal('Settings',`<h3>GitHub token <small>(optional)</small></h3><p class="mut">Raises GitHub’s API limit from 60 to 5,000 requests/hour. No scopes needed. Stored only in this browser.</p><div class="row"><input id="tk" type="password" autocomplete="off" aria-label="GitHub personal access token" placeholder="ghp_…"><button class="btn pri" id="tks">Save</button></div>${api.hasToken()?'<div class="row"><button class="btn" id="tkr">Remove saved token</button></div>':''}<h3>Theme</h3>${seg('th',['auto','light','dark'],null,th)}<h3>Data</h3><p class="mut">${lib().length} tracked app(s). Everything stays on this device.</p><button class="btn" id="cc">Clear cached GitHub data</button>`,()=>{
+    segBind('th',theme);
+    $('#tks',dlg).onclick=async()=>{const v=$('#tk',dlg).value.trim();if(!v)return;try{await api.setToken(v);toast('Token verified and saved');dlg.close()}catch(e){toast(e.message,1)}};
+    $('#tkr',dlg)?.addEventListener('click',()=>{api.clearToken();toast('Token removed');dlg.close()});
+    $('#cc',dlg).onclick=()=>{api.clearCache();toast('Cache cleared')}})}
+const rec=f=>set('gg.rec',[f,...get('gg.rec',[]).filter(x=>x!==f)].slice(0,6));
+const go=f=>{location.hash='#/r/'+f};
+const fail=(e,f)=>{main.innerHTML=`<div class="err" role="alert"><h2>Couldn’t load ${esc(f||'data')}</h2><p>${esc(e.message)}</p><div class="row"><a class="btn" href="#/">Back home</a><button class="btn" id="retry">Try again</button></div></div>`;$('#retry').onclick=route;$('#live').textContent='Error: '+e.message};
+const card=(f,d)=>`<a class="card" href="#/r/${esc(f)}"><img src="${esc(av(f))}" alt="" width="40" height="40" loading="lazy"><div><b>${esc(f.split('/')[1])}</b><span>${esc(d||'')}</span></div></a>`;
+function home(){
+  const rc=get('gg.rec',[]);
+  main.innerHTML=`<section class="hero"><h1>The right GitHub download, instantly</h1><p>Paste a repository or search by name. GitGet picks the installer for your system, shows its checksum and keeps track of updates.</p>
+<form id="sf" role="search"><div class="sbox"><input id="q" type="search" role="combobox" aria-expanded="false" aria-controls="sg" aria-autocomplete="list" placeholder="owner/repo, GitHub URL or app name   ( / )" autocomplete="off" spellcheck="false" aria-label="Search GitHub repositories"><button class="btn pri">Find</button></div><ul id="sg" role="listbox" aria-label="Suggestions" hidden></ul></form>
+${rc.length?`<div class="chips" aria-label="Recent">${rc.map(f=>`<a href="#/r/${esc(f)}">${esc(f)}</a>`).join('')}<button class="lnk" id="clr">Clear</button></div>`:''}</section>
+<div id="res"></div><h2>Popular apps</h2><div class="grid">${FEAT.map(x=>card(...x)).join('')}</div>
+<h2>How it works</h2><div class="grid"><div class="panel"><b>1. We detect</b><p class="mut">Your OS and CPU, read from your browser. Wrong? Change it from the button at the top.</p></div><div class="panel"><b>2. We match</b><p class="mut">Every release file is scored; checksums, sources and other platforms are filtered out.</p></div><div class="panel"><b>3. You download</b><p class="mut">The link goes straight to GitHub. We host nothing and track nothing.</p></div></div>`;
+  const q=$('#q'),sg=$('#sg');let sel=-1,items=[],tm,seq=0;
+  const hide=()=>{sg.hidden=true;q.setAttribute('aria-expanded','false');sel=-1};
+  const show=(a,msg)=>{items=a;sel=-1;sg.innerHTML=a.length?a.map((x,i)=>`<li role="option" id="o${i}" data-f="${esc(x.f)}">${esc(x.f)}${x.d?`<small>${esc(x.d)}</small>`:''}</li>`).join(''):`<li role="option" aria-disabled="true">${esc(msg||'No matches')}</li>`;sg.hidden=false;q.setAttribute('aria-expanded','true')};
+  q.oninput=()=>{clearTimeout(tm);const v=q.value.trim();if(v.length<2)return hide();const d=api.parse(v);
+    if(d)return show([{f:d,d:'Open this repository'}]);
+    tm=setTimeout(async()=>{const n=++seq;try{const r=await api.search(v);if(n===seq)show(r.items.map(i=>({f:i.full_name,d:i.description})))}catch(e){if(n===seq)show([],e.message)}},450)};
+  q.onkeydown=e=>{if(sg.hidden||!items.length)return;if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();sel=(sel+(e.key==='ArrowDown'?1:-1)+items.length)%items.length;$$('#sg li').forEach((l,i)=>l.setAttribute('aria-selected',i===sel));q.setAttribute('aria-activedescendant','o'+sel)}else if(e.key==='Escape')hide();else if(e.key==='Enter'&&sel>=0){e.preventDefault();go(items[sel].f)}};
+  sg.onmousedown=e=>{const l=e.target.closest('li[data-f]');if(l){e.preventDefault();go(l.dataset.f)}};
+  q.onblur=()=>setTimeout(hide,120);
+  $('#sf').onsubmit=async e=>{e.preventDefault();const v=q.value.trim();if(!v)return;const d=api.parse(v);if(d)return go(d);
+    $('#res').innerHTML='<div class="sk"><i></i></div>';try{const r=await api.search(v);$('#res').innerHTML=r.items.length?`<h2>Results for “${esc(v)}”</h2><div class="grid">${r.items.map(i=>card(i.full_name,i.description)).join('')}</div>`:'<p class="note">No repositories found.</p>'}catch(x){$('#res').innerHTML=`<p class="err" role="alert">${esc(x.message)}</p>`}};
+  $('#clr')?.addEventListener('click',()=>{set('gg.rec',[]);home()});
 }
+async function detail(full,t){
+  main.innerHTML='<div class="sk" aria-busy="true"><i></i><i></i><i></i></div>';const [o,r]=full.split('/');let repo,rels;
+  try{[repo,rels]=await Promise.all([api.repo(o,r),api.releases(o,r)])}catch(e){return t===rt&&fail(e,full)}
+  if(t!==rt)return;full=repo.full_name;rec(full);document.title=full+' – GitGet';
+  const all=rels.filter(x=>!x.draft);let inc=false,tag=null;
+  const draw=foc=>{
+    const pool=(inc?all:all.filter(x=>!x.prerelease));const P=pool.length?pool:all,rel=P.find(x=>x.tag_name===tag)||P[0];if(rel)tag=rel.tag_name;
+    const tr=lib().find(x=>x.full===full);let body='';
+    if(!rel)body=`<div class="note">No published releases yet. <a href="${esc(repo.html_url)}" rel="noopener">Open on GitHub</a></div>`;
+    else{const {best,list}=pick(rel.assets,sys),dl=a=>a.browser_download_url,sha=(best?.digest||'').replace('sha256:',''),
+      cmd=a=>(sys.os==='windows'?'curl.exe':'curl')+` -L -o "${a.name}" "${dl(a)}"`;
+      body=`<div class="panel">${best?`<a class="btn pri big" href="${esc(dl(best))}" rel="noopener">⬇ Download for ${esc(sysText())}<small>${esc(best.name)} · ${fmt(best.size)}</small></a>${sha?`<p class="sha"><b>SHA-256</b> <code>${esc(sha)}</code> <button class="lnk" data-c="${esc(sha)}">Copy</button></p>`:''}<div class="row"><button class="btn" data-c="${esc(cmd(best))}">Copy download command</button></div>`:rel.assets.length?`<p class="note">No file clearly matches ${esc(sysText())}. Choose below or <button class="lnk" id="sysb">change system</button>.</p>`:`<p class="note">This release has no prebuilt files. <a href="${esc(rel.html_url)}" rel="noopener">Release page</a> · <a href="${esc(rel.zipball_url)}" rel="noopener">Source (zip)</a></p>`}
+${rel.assets.length?`<details class="all"><summary>All files (${rel.assets.length})</summary><ul>${list.map(x=>`<li><a href="${esc(dl(x.a))}" rel="noopener">${esc(x.a.name)}</a><span>${fmt(x.a.size)} · ${x.a.download_count.toLocaleString()} downloads</span></li>`).join('')}</ul></details>`:''}</div>
+${rel.body?`<h2>Release notes</h2><pre class="notes">${esc(rel.body.slice(0,2500))}${rel.body.length>2500?'\n…':''}</pre><p><a href="${esc(rel.html_url)}" rel="noopener">Full notes on GitHub</a></p>`:''}`}
+    main.innerHTML=`<p><a href="#/">← Back</a></p><div class="rh"><img src="${esc(av(full))}" alt="" width="64" height="64"><div><h1>${esc(full)}</h1><p>${esc(repo.description||'')}</p></div></div>
+<div class="meta"><span>★ ${repo.stargazers_count.toLocaleString()}</span>${repo.license?.spdx_id&&repo.license.spdx_id!=='NOASSERTION'?`<span>${esc(repo.license.spdx_id)}</span>`:''}${repo.language?`<span>${esc(repo.language)}</span>`:''}${rel?`<span>Released ${esc(new Date(rel.published_at).toLocaleDateString())}</span>`:''}${repo.archived?'<span class="up">Archived</span>':''}</div>
+<div class="row">${rel?`<select id="ver" aria-label="Version">${P.slice(0,20).map(x=>`<option value="${esc(x.tag_name)}"${x===rel?' selected':''}>${esc(x.name||x.tag_name)}${x.prerelease?' (pre-release)':''}</option>`).join('')}</select><label class="chk"><input type="checkbox" id="pre"${inc?' checked':''}> Pre-releases</label>`:''}<button class="btn" id="trk">${tr?'✓ Tracking — stop':'☆ Track updates'}</button><button class="btn" data-c="${esc(location.origin+location.pathname+'#/r/'+full)}">Copy link</button></div>${body}`;
+    $('#ver')?.addEventListener('change',e=>{tag=e.target.value;draw('ver')});$('#pre')?.addEventListener('change',e=>{inc=e.target.checked;draw('pre')});$('#sysb')?.addEventListener('click',sysDlg);
+    $('#trk').onclick=()=>{const L=lib();if(tr)setLib(L.filter(x=>x.full!==full));else{const st=all.find(x=>!x.prerelease)||rel;setLib([...L,{full,tag:rel?rel.tag_name:'',latest:st?st.tag_name:'',desc:repo.description||'',checked:Date.now()}])}badge();toast(tr?'Removed from library':'Tracking '+full);draw('trk')};
+    if(foc)$('#'+foc)?.focus();};
+  draw();$('#live').textContent='Loaded '+full;
+}
+function badge(){const n=lib().filter(x=>x.latest&&x.latest!==x.tag).length;const b=$('#badge');b.textContent=n;b.hidden=!n}
+async function check(force){const L=lib(),u={};
+  await Promise.all(L.map(async x=>{try{const [o,r]=x.full.split('/'),l=await api.latest(o,r,force);u[x.full]={latest:l.tag_name,checked:Date.now()}}catch{}}));
+  setLib(lib().map(x=>({...x,...(u[x.full]||{})})));badge();return Object.keys(u).length}
+function library(t){
+  const draw=()=>{const L=lib(),only=$('#onl')?.checked;const show=only?L.filter(x=>x.latest&&x.latest!==x.tag):L;
+    $('#ll').innerHTML=show.length?show.map(x=>{const up=x.latest&&x.latest!==x.tag;return `<li><div><img class="av" src="${esc(av(x.full))}" alt="" width="40" height="40"><span><a href="#/r/${esc(x.full)}"><b>${esc(x.full)}</b></a><br>${up?`<b class="up">Update: ${esc(x.tag||'?')} → ${esc(x.latest)}</b>`:`<span class="ok">Up to date${x.tag?' · '+esc(x.tag):''}</span>`}</span></div><span class="row">${up?`<button class="btn" data-a="mark" data-f="${esc(x.full)}">Mark updated</button>`:''}<a class="btn pri" href="#/r/${esc(x.full)}">Open</a><button class="btn" data-a="del" data-f="${esc(x.full)}" aria-label="Remove ${esc(x.full)}">✕</button></span></li>`}).join(''):`<li><p class="mut">${only?'Everything is up to date.':'Nothing tracked yet. Open an app and press “Track updates”.'} <a href="#/">Discover apps</a></p></li>`;
+    $('#st').textContent=`${L.length} app(s) · ${L.filter(x=>x.latest&&x.latest!==x.tag).length} update(s)`;badge()};
+  main.innerHTML=`<div class="lh"><h1>My Library</h1><div class="row"><button class="btn" id="chk">↻ Check updates</button><button class="btn" id="exp">Export</button><button class="btn" id="impb">Import</button><input id="imp" type="file" accept=".json,application/json" hidden></div></div><p class="mut" id="st" role="status"></p><label class="chk"><input type="checkbox" id="onl"> Only show updates</label><ul class="list" id="ll"></ul>`;
+  draw();$('#onl').onchange=draw;
+  $('#chk').onclick=async e=>{e.target.disabled=true;const n=await check(true);e.target.disabled=false;draw();toast(n?'Checked '+n+' app(s)':'Nothing to check',!n&&lib().length>0)};
+  $('#ll').onclick=e=>{const b=e.target.closest('[data-a]');if(!b)return;const f=b.dataset.f;setLib(b.dataset.a==='del'?lib().filter(x=>x.full!==f):lib().map(x=>x.full===f?{...x,tag:x.latest}:x));draw()};
+  $('#exp').onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify({version:1,apps:lib().map(({full,tag})=>({full,tag}))},null,1)],{type:'application/json'}));a.download='gitget-library.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1e3)};
+  $('#impb').onclick=()=>$('#imp').click();
+  $('#imp').onchange=async e=>{try{const j=JSON.parse(await e.target.files[0].text()),have=new Set(lib().map(x=>x.full)),add=(j.apps||[]).filter(x=>/^[\w.-]+\/[\w.-]+$/.test(x?.full)&&!have.has(x.full)).map(x=>({full:x.full,tag:String(x.tag||''),latest:'',desc:''}));setLib([...lib(),...add]);draw();toast('Imported '+add.length+' app(s)');if(add.length){await check(true);draw()}}catch{toast('That file isn’t a valid GitGet library.',1)}e.target.value=''};
+  if(lib().some(x=>!x.checked||Date.now()-x.checked>36e5))check(false).then(()=>t===rt&&$('#ll')&&draw());
+}
+function route(){const t=++rt,h=location.hash.slice(1)||'/',m=h.match(/^\/r\/([\w.-]+\/[\w.-]+)/);
+  const cur=h.startsWith('/library')?'library':'home';$$('nav a').forEach(a=>a.toggleAttribute('aria-current',a.dataset.r===cur));
+  document.title='GitGet – Download the right GitHub release for your device';
+  if(m)detail(m[1],t);else if(h.startsWith('/library')){document.title='My Library – GitGet';library(t)}else home();
+  scrollTo(0,0)}
+(async()=>{theme(get('gg.theme','auto'));sys=await detect();paintSys();
+  $('#sys').onclick=sysDlg;$('#cfg').onclick=cfg;$('#theme').onclick=()=>{const o=['auto','light','dark'],n=o[(o.indexOf(get('gg.theme','auto'))+1)%3];theme(n);toast('Theme: '+n)};
+  main.addEventListener('click',e=>{const b=e.target.closest('[data-c]');if(b)copy(b.dataset.c)});
+  addEventListener('hashchange',route);
+  addEventListener('offline',()=>toast('You’re offline — cached data only.',1));addEventListener('online',()=>toast('Back online'));
+  addEventListener('gg:rl',()=>{const r=api.rate;$('#rl').textContent=`GitHub API: ${r.remaining}/${r.limit} requests left this hour`});
+  document.addEventListener('keydown',e=>{if(e.key==='/'&&!/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)&&!dlg.open){e.preventDefault();if(!$('#q')){location.hash='#/';setTimeout(()=>$('#q')?.focus(),50)}else $('#q').focus()}});
+  route();badge();
+  if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+})();
