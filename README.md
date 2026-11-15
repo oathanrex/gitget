@@ -24,24 +24,6 @@
 - **Storage:** LocalStorage for library persistence.
 - **Zero Dependencies:** No frameworks, no build steps, just pure web capability.
 
-## 🚀 Deployment
-
-GitGet is built to run on **GitHub Pages** (or any static host) out of the box.
-
-1.  **Clone & Personalize:**
-    ```bash
-    git clone https://github.com/yourusername/gitget.git
-    cd gitget
-    ```
-
-2.  **Upload to GitHub:**
-    Push the code to a new repository named `gitget`.
-
-3.  **Enable Pages:**
-    Go to `Settings` -> `Pages` -> Select `main` branch -> `Save`.
-
-Your app will be live at `https://yourusername.github.io/gitget/`!
-
 ## 🤝 Contributing
 
 Contributions are welcome! If you find a bug or want to improve the detection logic:
