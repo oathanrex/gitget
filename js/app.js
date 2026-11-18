@@ -113,6 +113,225 @@ const segBind=(id,fn)=>{
   };
 };
 
+const PKG_MAP = {
+  'obsidianmd/obsidian-releases': {
+    winget: 'winget install Obsidian.Obsidian',
+    brew: 'brew install --cask obsidian',
+    flatpak: 'flatpak install flathub md.obsidian.Obsidian',
+    scoop: 'scoop install obsidian'
+  },
+  'neovim/neovim': {
+    winget: 'winget install Neovim.Neovim',
+    brew: 'brew install neovim',
+    flatpak: 'flatpak install flathub io.neovim.nvim',
+    scoop: 'scoop install neovim',
+    apt: 'sudo apt install neovim'
+  },
+  'VSCodium/vscodium': {
+    winget: 'winget install VSCodium.VSCodium',
+    brew: 'brew install --cask vscodium',
+    flatpak: 'flatpak install flathub com.vscodium.codium',
+    scoop: 'scoop install vscodium'
+  },
+  'git-for-windows/git': {
+    winget: 'winget install Git.Git',
+    scoop: 'scoop install git'
+  },
+  'godotengine/godot': {
+    winget: 'winget install GodotEngine.GodotEngine',
+    brew: 'brew install --cask godot',
+    flatpak: 'flatpak install flathub org.godotengine.Godot',
+    scoop: 'scoop install godot'
+  },
+  'obsproject/obs-studio': {
+    winget: 'winget install OBSProject.OBSStudio',
+    brew: 'brew install --cask obs',
+    flatpak: 'flatpak install flathub com.obsproject.Studio',
+    scoop: 'scoop install obs-studio'
+  },
+  'HandBrake/HandBrake': {
+    winget: 'winget install HandBrake.HandBrake',
+    brew: 'brew install --cask handbrake',
+    flatpak: 'flatpak install flathub fr.handbrake.ghb',
+    scoop: 'scoop install handbrake'
+  },
+  'dbeaver/dbeaver': {
+    winget: 'winget install dbeaver.dbeaver',
+    brew: 'brew install --cask dbeaver-community',
+    flatpak: 'flatpak install flathub io.dbeaver.DBeaverCommunity'
+  },
+  'nushell/nushell': {
+    winget: 'winget install Nushell.Nushell',
+    brew: 'brew install nushell',
+    cargo: 'cargo install nu',
+    scoop: 'scoop install nu'
+  },
+  'bitwarden/clients': {
+    winget: 'winget install Bitwarden.Bitwarden',
+    brew: 'brew install --cask bitwarden',
+    flatpak: 'flatpak install flathub com.bitwarden.desktop'
+  },
+  'keepassxreboot/keepassxc': {
+    winget: 'winget install KeePassXCTeam.KeePassXC',
+    brew: 'brew install --cask keepassxc',
+    flatpak: 'flatpak install flathub org.keepassxc.KeePassXC'
+  },
+  'termux/termux-app': {
+    adb: 'adb install termux-app.apk'
+  }
+};
+
+function getPkgCommands(repoFullName, bestFile){
+  const mapped = PKG_MAP[repoFullName] || {};
+  const repoName = (repoFullName.split('/')[1] || repoFullName).toLowerCase();
+  const cmds = [];
+  if(mapped.winget) cmds.push({ mgr: 'winget', cmd: mapped.winget });
+  else cmds.push({ mgr: 'winget', cmd: `winget install ${repoName}` });
+
+  if(mapped.brew) cmds.push({ mgr: 'brew', cmd: mapped.brew });
+  else cmds.push({ mgr: 'brew', cmd: `brew install ${repoName}` });
+
+  if(mapped.flatpak) cmds.push({ mgr: 'flatpak', cmd: mapped.flatpak });
+
+  if(bestFile && bestFile.name.endsWith('.apk')){
+    cmds.push({ mgr: 'adb', cmd: `adb install "${bestFile.name}"` });
+  }
+  return cmds;
+}
+
+async function verifyFileHash(file, expectedSha){
+  const buffer = await file.arrayBuffer();
+  const digest = await crypto.subtle.digest('SHA-256', buffer);
+  const hash = Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, '0')).join('');
+  return { hash, isMatch: hash.toLowerCase() === expectedSha.toLowerCase().trim() };
+}
+
+function openPalette(){
+  let palDlg = $('#palette-dlg');
+  if(!palDlg){
+    palDlg = document.createElement('dialog');
+    palDlg.id = 'palette-dlg';
+    document.body.appendChild(palDlg);
+  }
+
+  const items = [
+    { group: 'Views', label: 'Home Page', hint: 'Browse Open-Source Apps', icon: ICONS.repo, action: () => { location.hash = '#/'; } },
+    { group: 'Views', label: 'My Library', hint: 'Tracked Updates & Releases', icon: ICONS.star, action: () => { location.hash = '#/lib'; } },
+    { group: 'Views', label: 'Recent History', hint: 'Past Visits & Downloads', icon: ICONS.history, action: () => histDlg() },
+    { group: 'Views', label: 'Settings & GitHub Token', hint: 'API Quotas & Token', icon: ICONS.gear, action: () => cfg() },
+
+    { group: 'Switch Target Operating System', label: 'Switch to Windows (x64)', hint: 'Standard PCs & Laptops', icon: ICONS.windows, action: () => { sys = { os: 'windows', arch: 'x64' }; saveSys(sys); paintSys(); route(); } },
+    { group: 'Switch Target Operating System', label: 'Switch to macOS (Apple Silicon)', hint: 'M1 / M2 / M3 / M4 Macs', icon: ICONS.macos, action: () => { sys = { os: 'macos', arch: 'arm64' }; saveSys(sys); paintSys(); route(); } },
+    { group: 'Switch Target Operating System', label: 'Switch to Linux (x86_64)', hint: 'Standard PC & Servers', icon: ICONS.linux, action: () => { sys = { os: 'linux', arch: 'x64' }; saveSys(sys); paintSys(); route(); } },
+    { group: 'Switch Target Operating System', label: 'Switch to Android (ARM64)', hint: 'Modern 64-bit Phones (v8a)', icon: ICONS.android, action: () => { sys = { os: 'android', arch: 'arm64' }; saveSys(sys); paintSys(); route(); } },
+    { group: 'Switch Target Operating System', label: 'Switch to iOS (.ipa)', hint: 'iPhone & iPad Sideloading', icon: ICONS.ios, action: () => { sys = { os: 'ios', arch: 'arm64' }; saveSys(sys); paintSys(); route(); } },
+
+    { group: 'Preferences & Actions', label: 'Toggle Appearance Theme', hint: 'Light / Dark Mode', icon: ICONS.moon, action: () => {
+      const o = ['auto', 'light', 'dark'];
+      const n = o[(o.indexOf(get('gg.theme', 'auto')) + 1) % 3];
+      theme(n);
+    }},
+    { group: 'Preferences & Actions', label: 'Auto-detect Current Device', hint: 'Live System Scan', icon: ICONS.crosshair, action: async () => {
+      clearSys();
+      sys = await detect();
+      paintSys();
+      route();
+    }},
+
+    ...FEAT.map(([full, desc]) => ({
+      group: 'Popular Apps',
+      label: full.split('/')[1] || full,
+      hint: desc,
+      icon: ICONS.download,
+      action: () => { location.hash = `#/r/${full}`; }
+    }))
+  ];
+
+  let selectedIndex = 0;
+  let filtered = [...items];
+
+  const render = () => {
+    let currentGroup = '';
+    const bodyHtml = filtered.length ? filtered.map((item, idx) => {
+      let groupHeader = '';
+      if(item.group !== currentGroup){
+        currentGroup = item.group;
+        groupHeader = `<div class="palette-group-title">${esc(currentGroup)}</div>`;
+      }
+      return `${groupHeader}
+        <button type="button" class="palette-item ${idx === selectedIndex ? 'active' : ''}" data-idx="${idx}">
+          ${item.icon || ICONS.repo}
+          <span class="palette-label">${esc(item.label)}</span>
+          <span class="palette-hint">${esc(item.hint)}</span>
+        </button>`;
+    }).join('') : '<div style="padding:1.5rem;text-align:center;color:var(--mut)">No matching commands or apps</div>';
+
+    $('#palette-body', palDlg).innerHTML = bodyHtml;
+    const activeEl = $('.palette-item.active', palDlg);
+    if(activeEl) activeEl.scrollIntoView({ block: 'nearest' });
+  };
+
+  palDlg.innerHTML = `
+    <div class="palette-header">
+      ${ICONS.search}
+      <input type="text" class="palette-input" id="palette-input" placeholder="Type a command, app name, or action..." autocomplete="off">
+      <span class="palette-esc">ESC</span>
+    </div>
+    <div class="palette-body" id="palette-body"></div>
+  `;
+
+  if(!palDlg.open) palDlg.showModal();
+  render();
+
+  const inp = $('#palette-input', palDlg);
+  inp.focus();
+
+  inp.addEventListener('input', () => {
+    const q = inp.value.toLowerCase().trim();
+    if(!q){
+      filtered = [...items];
+    } else {
+      filtered = items.filter(it => it.label.toLowerCase().includes(q) || it.hint.toLowerCase().includes(q) || (it.group && it.group.toLowerCase().includes(q)));
+    }
+    selectedIndex = 0;
+    render();
+  });
+
+  palDlg.addEventListener('keydown', e => {
+    if(e.key === 'ArrowDown'){
+      e.preventDefault();
+      selectedIndex = (selectedIndex + 1) % Math.max(1, filtered.length);
+      render();
+    } else if(e.key === 'ArrowUp'){
+      e.preventDefault();
+      selectedIndex = (selectedIndex - 1 + filtered.length) % Math.max(1, filtered.length);
+      render();
+    } else if(e.key === 'Enter'){
+      e.preventDefault();
+      if(filtered[selectedIndex]){
+        palDlg.close();
+        filtered[selectedIndex].action();
+      }
+    } else if(e.key === 'Escape'){
+      palDlg.close();
+    }
+  });
+
+  $('#palette-body', palDlg).addEventListener('click', e => {
+    const btn = e.target.closest('.palette-item');
+    if(!btn) return;
+    const idx = parseInt(btn.dataset.idx, 10);
+    if(filtered[idx]){
+      palDlg.close();
+      filtered[idx].action();
+    }
+  });
+
+  palDlg.addEventListener('click', e => {
+    if(e.target === palDlg) palDlg.close();
+  });
+}
+
 const OS_ARCH_MAP = {
   windows: [
     { id: 'x64', label: '64-bit (x64)', hint: 'Standard PCs & Laptops' },
@@ -365,7 +584,7 @@ function home(){
           <div class="search-input-wrap">
             <span class="search-icon-svg">${ICONS.search}</span>
             <input id="q" type="search" role="combobox" aria-expanded="false" aria-controls="sg" aria-autocomplete="list" placeholder="Search repositories, e.g. 'obsidian' or 'microsoft/vscode'..." autocomplete="off" spellcheck="false" aria-label="Search GitHub repositories">
-            <span class="kbd-hint">/</span>
+            <span class="kbd-hint" id="cmd-k-trigger" style="cursor:pointer" title="Open Command Palette (Cmd+K)">⌘K</span>
           </div>
           <button class="btn pri">Find</button>
         </div>
@@ -531,6 +750,8 @@ async function detail(full,t){
         `;
       }).join('');
 
+      const pkgCmds=getPkgCommands(full,best);
+
       body=`<div class="panel">
         <div class="dl-platforms">
           <div class="dl-plat-header">
@@ -545,13 +766,57 @@ async function detail(full,t){
             <span style="display:inline-flex;align-items:center;gap:.5rem">${ICONS.download} <b>Download for ${esc(viewSysTitle)}</b></span>
             <small>${esc(best.name)} · ${fmt(best.size)}</small>
           </a>
-          ${sha?`<p class="sha"><b>SHA-256:</b> <code>${esc(sha)}</code> <button class="lnk" data-c="${esc(sha)}">${ICONS.copy} Copy</button></p>`:''}
-          <div class="row">
+          ${sha?`
+            <div class="verifier-box">
+              <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem">
+                <span style="font-size:12.5px;font-weight:600;display:inline-flex;align-items:center;gap:.35rem">${ICONS.shield} <b>SHA-256:</b> <code>${esc(sha)}</code></span>
+                <div style="display:flex;gap:.4rem">
+                  <button type="button" class="btn sm" data-c="${esc(sha)}">${ICONS.copy} Copy Hash</button>
+                  <label class="btn sm" style="cursor:pointer;margin:0;display:inline-flex;align-items:center;gap:.35rem">
+                    ${ICONS.check} Verify File
+                    <input type="file" id="verify-file-input" style="display:none">
+                  </label>
+                </div>
+              </div>
+              <div id="verifier-result" hidden></div>
+            </div>
+          `:''}
+          <div class="row" style="margin-top:.85rem">
             <button class="btn" data-c="${esc(cmd(best))}">${ICONS.copy} Copy command</button>
             <button class="btn" id="qr-btn" type="button">${ICONS.qrcode} Send to Phone (QR)</button>
           </div>
+          <div class="pkg-block">
+            <div class="pkg-header">
+              <span class="pkg-title">${ICONS.terminal} Package Manager Commands</span>
+              <span class="mut" style="font-size:11.5px">Terminal 1-liners</span>
+            </div>
+            <div class="pkg-grid">
+              ${pkgCmds.map(c=>`
+                <div class="pkg-row">
+                  <span class="pkg-badge">${esc(c.mgr)}</span>
+                  <code class="pkg-cmd">${esc(c.cmd)}</code>
+                  <button type="button" class="pkg-copy" data-c="${esc(c.cmd)}">${ICONS.copy} Copy</button>
+                </div>
+              `).join('')}
+            </div>
+          </div>
         `:rel.assets.length?`
           <p class="note">No file clearly matches ${esc(viewSysTitle)}. Choose from all files below or <button class="lnk" id="sysb">change system</button>.</p>
+          <div class="pkg-block">
+            <div class="pkg-header">
+              <span class="pkg-title">${ICONS.terminal} Package Manager Commands</span>
+              <span class="mut" style="font-size:11.5px">Terminal 1-liners</span>
+            </div>
+            <div class="pkg-grid">
+              ${pkgCmds.map(c=>`
+                <div class="pkg-row">
+                  <span class="pkg-badge">${esc(c.mgr)}</span>
+                  <code class="pkg-cmd">${esc(c.cmd)}</code>
+                  <button type="button" class="pkg-copy" data-c="${esc(c.cmd)}">${ICONS.copy} Copy</button>
+                </div>
+              `).join('')}
+            </div>
+          </div>
         `:`
           <p class="note">This release has no prebuilt binary files. <a href="${esc(rel.html_url)}" rel="noopener">Release page</a> · <a href="${esc(rel.zipball_url)}" rel="noopener">Source code (zip)</a></p>
         `}
@@ -617,6 +882,29 @@ async function detail(full,t){
            </div>
          </div>`
       );
+    });
+    $('#verify-file-input')?.addEventListener('change',async e=>{
+      const file=e.target.files?.[0];
+      if(!file||!sha)return;
+      const resEl=$('#verifier-result');
+      if(resEl){
+        resEl.hidden=false;
+        resEl.className='verifier-status';
+        resEl.textContent='Computing SHA-256 hash locally in browser...';
+        try{
+          const {hash,isMatch}=await verifyFileHash(file,sha);
+          if(isMatch){
+            resEl.className='verifier-status match';
+            resEl.innerHTML=`<strong>✅ 100% Match Verified:</strong> <code>${esc(file.name)}</code> matches official release hash perfectly! Safe to install.`;
+          }else{
+            resEl.className='verifier-status mismatch';
+            resEl.innerHTML=`<strong>❌ Hash Mismatch:</strong> Computed hash is <code>${esc(hash)}</code>, expected <code>${esc(sha)}</code>. File may be corrupted or modified.`;
+          }
+        }catch(err){
+          resEl.className='verifier-status mismatch';
+          resEl.textContent='Failed to verify file: '+err.message;
+        }
+      }
     });
     $('#trk').onclick=()=>{
       const L=lib();
@@ -768,6 +1056,7 @@ function route(){
   sys=await detect();
   paintSys();
 
+  $('#cmd-pal')?.addEventListener('click',openPalette);
   $('#sys').onclick=sysDlg;
   $('#hst').onclick=histDlg;
   $('#cfg').onclick=cfg;
@@ -792,14 +1081,12 @@ function route(){
   });
 
   document.addEventListener('keydown',e=>{
-    if(e.key==='/'&&!/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)&&!dlg.open){
+    if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='k'){
       e.preventDefault();
-      if(!$('#q')){
-        location.hash='#/';
-        setTimeout(()=>$('#q')?.focus(),50);
-      }else{
-        $('#q').focus();
-      }
+      openPalette();
+    }else if(e.key==='/'&&!/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)&&!dlg.open&&!$('#palette-dlg')?.open){
+      e.preventDefault();
+      openPalette();
     }
   });
 
