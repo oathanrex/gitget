@@ -148,7 +148,6 @@ function sysDlg(){
         sys=await detect();
         paintSys();
         dlg.close();
-        toast('Detected '+sysText());
         route();
       };
       $('#ok',dlg).onclick=()=>{
@@ -156,7 +155,6 @@ function sysDlg(){
         saveSys(sys);
         paintSys();
         dlg.close();
-        toast('Updated target to '+sysText());
         route();
       };
     }
@@ -662,7 +660,6 @@ function route(){
     const o=['auto','light','dark'];
     const n=o[(o.indexOf(get('gg.theme','auto'))+1)%3];
     theme(n);
-    toast('Theme: '+n);
   };
 
   // Dedicated copy delegation ONLY on elements with data-c (never triggers on data-cat)
