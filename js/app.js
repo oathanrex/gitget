@@ -113,8 +113,47 @@ const segBind=(id,fn)=>{
   };
 };
 
-function sysDlg(){
+const OS_ARCH_MAP = {
+  windows: [
+    { id: 'x64', label: '64-bit (x64)', hint: 'Standard PCs & Laptops' },
+    { id: 'arm64', label: 'ARM64', hint: 'Snapdragon X / Surface Pro' },
+    { id: 'x86', label: '32-bit (x86)', hint: 'Legacy Windows PCs' }
+  ],
+  macos: [
+    { id: 'arm64', label: 'Apple Silicon', hint: 'M1 / M2 / M3 / M4 Macs' },
+    { id: 'x64', label: 'Intel Mac', hint: '64-bit Intel Macs' },
+    { id: 'any', label: 'Universal', hint: 'Runs on Intel & Apple Silicon' }
+  ],
+  linux: [
+    { id: 'x64', label: 'x86_64', hint: 'Standard Linux PC & Servers' },
+    { id: 'arm64', label: 'ARM64 (aarch64)', hint: 'Raspberry Pi 4/5, Servers' },
+    { id: 'arm', label: 'ARM 32-bit (armhf)', hint: 'Older Embedded Systems' }
+  ],
+  android: [
+    { id: 'arm64', label: 'Modern Phones (ARM64)', hint: 'v8a · 95%+ of Android Devices' },
+    { id: 'any', label: 'Universal APK', hint: 'Works on all Android phones' },
+    { id: 'arm', label: 'Legacy Phones (ARM)', hint: 'v7a · Older/Budget phones' },
+    { id: 'x64', label: 'PC Emulators (x86_64)', hint: 'BlueStacks, WSA, Emulators' }
+  ],
+  ios: [
+    { id: 'arm64', label: '64-bit (ARM64)', hint: 'iPhone & iPad Sideloading (.ipa)' }
+  ]
+};
+
+async function sysDlg(){
   let {os,arch}=sys;
+  const live=await detect();
+
+  const renderArch=(targetOs, selectedArch)=>{
+    const list=OS_ARCH_MAP[targetOs]||OS_ARCH_MAP.windows;
+    return list.map(item=>`
+      <button type="button" class="ar-card" data-v="${item.id}" aria-pressed="${item.id===selectedArch}">
+        <span class="ar-top">${ICONS.cpu} <span>${esc(item.label)}</span></span>
+        <span class="ar-hint">${esc(item.hint)}</span>
+      </button>
+    `).join('');
+  };
+
   const osButtons=Object.keys(LABEL).map(k=>`
     <button type="button" data-v="${k}" aria-pressed="${k===os}">
       ${OS_ICONS[k]||''}
@@ -122,27 +161,54 @@ function sysDlg(){
     </button>
   `).join('');
 
-  const archButtons=['x64','arm64','x86','arm'].map(k=>`
-    <button type="button" data-v="${k}" aria-pressed="${k===arch}">
-      ${ICONS.cpu}
-      <span>${esc(ARCHL[k])}</span>
-    </button>
-  `).join('');
-
   modal(
     'Target System & Architecture',
-    `<p class="db-sub">GitGet automatically scores and matches release assets for this configuration.</p>
+    `<div class="detected-device-card">
+       <div class="ddc-info">
+         <span class="ddc-pulse"></span>
+         <span>Live Device: <b>${esc(LABEL[live.os]||'Auto')} · ${esc(live.arch.toUpperCase())}</b></span>
+       </div>
+       <button type="button" class="btn sm" id="use-live">${ICONS.crosshair} Use this device</button>
+     </div>
+     <p class="db-sub">GitGet scores and picks release assets matching your chosen configuration.</p>
      <div class="db-label">Operating System</div>
-     <div class="seg" id="os-seg">${osButtons}</div>
+     <div class="os-grid" id="os-seg">${osButtons}</div>
      <div class="db-label">CPU Architecture</div>
-     <div class="seg" id="ar-seg">${archButtons}</div>
+     <div class="ar-grid" id="ar-seg">${renderArch(os, arch)}</div>
      <div class="modal-footer">
        <button type="button" class="btn" id="auto">${ICONS.crosshair} Auto-detect</button>
        <button type="button" class="btn pri" id="ok">${ICONS.check} Apply Changes</button>
      </div>`,
     ()=>{
-      segBind('os-seg',v=>os=v);
-      segBind('ar-seg',v=>arch=v);
+      const updateArchSeg=()=>{
+        const list=OS_ARCH_MAP[os]||OS_ARCH_MAP.windows;
+        if(!list.some(x=>x.id===arch))arch=list[0].id;
+        const el=$('#ar-seg',dlg);
+        if(el)el.innerHTML=renderArch(os,arch);
+      };
+
+      $('#os-seg',dlg).addEventListener('click',e=>{
+        const b=e.target.closest('[data-v]');
+        if(!b)return;
+        os=b.dataset.v;
+        $$('button','#os-seg').forEach(x=>x.setAttribute('aria-pressed',x===b?'true':'false'));
+        updateArchSeg();
+      });
+
+      $('#ar-seg',dlg).addEventListener('click',e=>{
+        const b=e.target.closest('[data-v]');
+        if(!b)return;
+        arch=b.dataset.v;
+        $$('.ar-card','#ar-seg').forEach(x=>x.setAttribute('aria-pressed',x===b?'true':'false'));
+      });
+
+      $('#use-live',dlg).onclick=()=>{
+        os=live.os;
+        arch=live.arch;
+        $$('button','#os-seg').forEach(x=>x.setAttribute('aria-pressed',x.dataset.v===os?'true':'false'));
+        updateArchSeg();
+      };
+
       $('#auto',dlg).onclick=async()=>{
         clearSys();
         sys=await detect();
@@ -150,6 +216,7 @@ function sysDlg(){
         dlg.close();
         route();
       };
+
       $('#ok',dlg).onclick=()=>{
         sys={os,arch};
         saveSys(sys);
@@ -435,7 +502,7 @@ async function detail(full,t){
   rec(full);
   document.title=full+' – GitGet';
   const all=rels.filter(x=>!x.draft);
-  let inc=false,tag=null;
+  let inc=false,tag=null,viewSys={...sys};
 
   const draw=foc=>{
     const pool=(inc?all:all.filter(x=>!x.prerelease));
@@ -446,23 +513,45 @@ async function detail(full,t){
 
     if(!rel)body=`<div class="note">No published releases yet. <a href="${esc(repo.html_url)}" rel="noopener">Open on GitHub</a></div>`;
     else{
-      const {best,list}=pick(rel.assets,sys);
+      const {best,list}=pick(rel.assets,viewSys);
       const dl=a=>a.browser_download_url;
       const sha=(best?.digest||'').replace('sha256:','');
-      const cmd=a=>(sys.os==='windows'?'curl.exe':'curl')+` -L -o "${a.name}" "${dl(a)}"`;
+      const cmd=a=>(viewSys.os==='windows'?'curl.exe':'curl')+` -L -o "${a.name}" "${dl(a)}"`;
+      const viewSysTitle=LABEL[viewSys.os]+' · '+(ARCHL[viewSys.arch]||viewSys.arch);
+
+      const platTabs=Object.keys(LABEL).map(k=>{
+        const testArch=(k==='android'||k==='macos')?'arm64':'x64';
+        const hasFile=rel.assets.some(a=>score(a.name,{os:k,arch:testArch})>=30);
+        return `
+          <button type="button" class="plat-tab ${k===viewSys.os?'active':''} ${hasFile?'has-file':'no-file'}" data-os="${k}" title="${hasFile?'Builds available for '+LABEL[k]:'No direct '+LABEL[k]+' installer found'}">
+            ${OS_ICONS[k]||''}
+            <span>${esc(LABEL[k])}</span>
+            ${hasFile?'<span class="plat-dot"></span>':''}
+          </button>
+        `;
+      }).join('');
 
       body=`<div class="panel">
+        <div class="dl-platforms">
+          <div class="dl-plat-header">
+            <span class="dl-plat-label">Target Platform</span>
+            <span class="mut" style="font-size:12px">Switch OS for this app</span>
+          </div>
+          <div class="plat-tabs" id="page-os-tabs">${platTabs}</div>
+        </div>
+
         ${best?`
           <a class="btn pri big" href="${esc(dl(best))}" rel="noopener">
-            <span style="display:inline-flex;align-items:center;gap:.5rem">${ICONS.download} <b>Download for ${esc(sysText())}</b></span>
+            <span style="display:inline-flex;align-items:center;gap:.5rem">${ICONS.download} <b>Download for ${esc(viewSysTitle)}</b></span>
             <small>${esc(best.name)} · ${fmt(best.size)}</small>
           </a>
           ${sha?`<p class="sha"><b>SHA-256:</b> <code>${esc(sha)}</code> <button class="lnk" data-c="${esc(sha)}">${ICONS.copy} Copy</button></p>`:''}
           <div class="row">
             <button class="btn" data-c="${esc(cmd(best))}">${ICONS.copy} Copy command</button>
+            <button class="btn" id="qr-btn" type="button">${ICONS.qrcode} Send to Phone (QR)</button>
           </div>
         `:rel.assets.length?`
-          <p class="note">No file clearly matches ${esc(sysText())}. Choose from all files below or <button class="lnk" id="sysb">change system</button>.</p>
+          <p class="note">No file clearly matches ${esc(viewSysTitle)}. Choose from all files below or <button class="lnk" id="sysb">change system</button>.</p>
         `:`
           <p class="note">This release has no prebuilt binary files. <a href="${esc(rel.html_url)}" rel="noopener">Release page</a> · <a href="${esc(rel.zipball_url)}" rel="noopener">Source code (zip)</a></p>
         `}
@@ -503,6 +592,32 @@ async function detail(full,t){
     $('#ver')?.addEventListener('change',e=>{tag=e.target.value;draw('ver')});
     $('#pre')?.addEventListener('change',e=>{inc=e.target.checked;draw('pre')});
     $('#sysb')?.addEventListener('click',sysDlg);
+    $('#page-os-tabs')?.addEventListener('click',e=>{
+      const b=e.target.closest('[data-os]');
+      if(!b)return;
+      const newOs=b.dataset.os;
+      viewSys.os=newOs;
+      viewSys.arch=(newOs==='android'||newOs==='macos')?'arm64':'x64';
+      draw();
+    });
+    $('#qr-btn')?.addEventListener('click',()=>{
+      const {best}=pick(rel.assets,viewSys);
+      if(!best)return;
+      const url=best.browser_download_url;
+      modal(
+        'Scan to Download on Phone',
+        `<div class="qr-dialog-body">
+           <div class="qr-frame">
+             <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=8&data=${encodeURIComponent(url)}" width="180" height="180" alt="QR Code">
+           </div>
+           <div class="qr-filename"><code>${esc(best.name)}</code></div>
+           <p class="qr-help">Scan with your phone's camera to start direct download on your device.</p>
+           <div style="margin-top:1rem">
+             <button class="btn sm" data-c="${esc(url)}">${ICONS.copy} Copy direct download link</button>
+           </div>
+         </div>`
+      );
+    });
     $('#trk').onclick=()=>{
       const L=lib();
       if(tr)setLib(L.filter(x=>x.full!==full));

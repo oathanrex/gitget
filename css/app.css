@@ -376,6 +376,232 @@ dialog::backdrop {
   letter-spacing: 0.06em; color: var(--mut); margin: 1.2rem 0 0.5rem;
 }
 
+/* System Dialog Balanced Grid & Dynamic Architecture Cards */
+.os-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0.5rem;
+  margin-bottom: 1.2rem;
+}
+.os-grid button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  min-height: 56px;
+  padding: 0.5rem 0.25rem;
+  border: 1px solid var(--bd);
+  border-radius: 8px;
+  background: var(--card);
+  color: var(--fg);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.12s ease;
+  text-align: center;
+}
+.os-grid button svg {
+  color: var(--mut);
+  width: 18px;
+  height: 18px;
+}
+.os-grid button:hover {
+  border-color: var(--bd2);
+  background: var(--card-hover);
+}
+.os-grid button:hover svg {
+  color: var(--fg);
+}
+.os-grid button[aria-pressed="true"] {
+  background: var(--ac);
+  color: #ffffff;
+  border-color: var(--ac);
+  font-weight: 600;
+  box-shadow: 0 1px 4px color-mix(in srgb, var(--ac) 40%, transparent);
+}
+.os-grid button[aria-pressed="true"] svg {
+  color: #ffffff;
+}
+@media (max-width: 520px) {
+  .os-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.ar-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 0.5rem;
+  margin-bottom: 1.2rem;
+}
+.ar-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.2rem;
+  padding: 0.6rem 0.85rem;
+  border: 1px solid var(--bd);
+  border-radius: 8px;
+  background: var(--card);
+  color: var(--fg);
+  font: inherit;
+  cursor: pointer;
+  transition: all 0.12s ease;
+  text-align: left;
+}
+.ar-card .ar-top {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 13px;
+  font-weight: 600;
+}
+.ar-card .ar-top svg { color: var(--mut); }
+.ar-card .ar-hint {
+  font-size: 11px;
+  color: var(--mut);
+  padding-left: 20px;
+}
+.ar-card:hover {
+  border-color: var(--bd2);
+  background: var(--card-hover);
+}
+.ar-card[aria-pressed="true"] {
+  border-color: var(--ac);
+  background: color-mix(in srgb, var(--ac) 12%, var(--card));
+}
+.ar-card[aria-pressed="true"] .ar-top {
+  color: var(--ac);
+}
+.ar-card[aria-pressed="true"] .ar-top svg {
+  color: var(--ac);
+}
+.ar-card[aria-pressed="true"] .ar-hint {
+  color: var(--fg);
+}
+
+.detected-device-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.6rem 0.85rem;
+  margin-bottom: 1rem;
+  border: 1px solid color-mix(in srgb, var(--ok) 35%, transparent);
+  background: color-mix(in srgb, var(--ok) 8%, var(--card));
+  border-radius: 8px;
+}
+.ddc-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 12.5px;
+}
+.ddc-pulse {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ok);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ok) 30%, transparent);
+}
+
+/* In-Page Platform Switcher Tabs */
+.dl-platforms {
+  margin-bottom: 1rem;
+}
+.dl-plat-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.45rem;
+}
+.dl-plat-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--mut);
+}
+.plat-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.plat-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.4rem 0.75rem;
+  border: 1px solid var(--bd);
+  border-radius: 8px;
+  background: var(--card);
+  color: var(--mut);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.12s ease;
+  position: relative;
+}
+.plat-tab:hover {
+  color: var(--fg);
+  border-color: var(--bd2);
+  background: var(--card-hover);
+}
+.plat-tab.active {
+  background: var(--ac);
+  color: #ffffff;
+  border-color: var(--ac);
+  font-weight: 600;
+}
+.plat-tab.active svg {
+  color: #ffffff;
+}
+.plat-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ok);
+}
+.plat-tab.active .plat-dot {
+  background: #ffffff;
+}
+.plat-tab.no-file {
+  opacity: 0.55;
+}
+
+/* Mobile Sideload QR Code Dialog */
+.qr-dialog-body {
+  text-align: center;
+  padding: 0.85rem 0.5rem 0.4rem;
+}
+.qr-frame {
+  display: inline-block;
+  padding: 12px;
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid var(--bd);
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 1rem;
+}
+.qr-frame img {
+  display: block;
+}
+.qr-filename {
+  font-size: 13.5px;
+  font-weight: 600;
+  margin-bottom: 0.35rem;
+  word-break: break-all;
+}
+.qr-help {
+  font-size: 12.5px;
+  color: var(--mut);
+  max-width: 320px;
+  margin: 0 auto;
+}
+
 /* System Dialog Segmented Option Pills */
 .seg { display: flex; flex-wrap: wrap; gap: 0.5rem; }
 .seg button {
