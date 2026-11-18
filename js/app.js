@@ -1,5 +1,5 @@
 import {detect,saveSys,clearSys,LABEL,ARCHL} from './detect.js';
-import {pick,fmt} from './match.js';
+import {pick,score,fmt} from './match.js';
 import * as api from './api.js';
 import {lib,setLib,get,set,hist,setHist,addHist} from './store.js';
 import {files,tabs,dens} from './files.js';
@@ -191,7 +191,7 @@ async function sysDlg(){
         const b=e.target.closest('[data-v]');
         if(!b)return;
         os=b.dataset.v;
-        $$('button','#os-seg').forEach(x=>x.setAttribute('aria-pressed',x===b?'true':'false'));
+        $$('#os-seg button',dlg).forEach(x=>x.setAttribute('aria-pressed',x===b?'true':'false'));
         updateArchSeg();
       });
 
@@ -199,13 +199,13 @@ async function sysDlg(){
         const b=e.target.closest('[data-v]');
         if(!b)return;
         arch=b.dataset.v;
-        $$('.ar-card','#ar-seg').forEach(x=>x.setAttribute('aria-pressed',x===b?'true':'false'));
+        $$('#ar-seg .ar-card',dlg).forEach(x=>x.setAttribute('aria-pressed',x===b?'true':'false'));
       });
 
       $('#use-live',dlg).onclick=()=>{
         os=live.os;
         arch=live.arch;
-        $$('button','#os-seg').forEach(x=>x.setAttribute('aria-pressed',x.dataset.v===os?'true':'false'));
+        $$('#os-seg button',dlg).forEach(x=>x.setAttribute('aria-pressed',x.dataset.v===os?'true':'false'));
         updateArchSeg();
       };
 
