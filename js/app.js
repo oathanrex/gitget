@@ -9,7 +9,35 @@ import {md} from './md.js';
 const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>[...r.querySelectorAll(s)];
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>'&#'+c.charCodeAt(0)+';');
 const av=f=>`https://avatars.githubusercontent.com/${f.split('/')[0]}?s=80`;
-const FEAT=[['VSCodium/vscodium','Code editor, no telemetry'],['obsidianmd/obsidian-releases','Notes & knowledge base'],['localsend/localsend','Share files nearby'],['ShareX/ShareX','Screen capture'],['obsproject/obs-studio','Recording & streaming'],['jgraph/drawio-desktop','Diagrams'],['balena-io/etcher','Flash OS images'],['bitwarden/clients','Password manager']];
+const CATS={all:'🌟 All',dev:'🛠️ Dev Tools',productivity:'📋 Productivity',media:'🎬 Media',security:'🔒 Security',utilities:'⚙️ Utilities'};
+const FEAT=[
+  ['VSCodium/vscodium','Code editor without telemetry or tracking','dev'],
+  ['git-for-windows/git','Official Git VCS package for Windows','dev'],
+  ['godotengine/godot','Multi-platform 2D & 3D game engine','dev'],
+  ['neovim/neovim','Vim-fork focused on extensibility and speed','dev'],
+  ['dbeaver/dbeaver','Universal multi-platform database manager & SQL client','dev'],
+  ['nushell/nushell','Modern structured pipeline shell for all systems','dev'],
+  ['obsidianmd/obsidian-releases','Local-first Markdown knowledge base & notes','productivity'],
+  ['jgraph/drawio-desktop','Security-first desktop diagramming & flowchart tool','productivity'],
+  ['marktext/marktext','Simple and elegant real-time Markdown editor','productivity'],
+  ['logseq/logseq','Privacy-first, open-source outliner & second brain','productivity'],
+  ['spacedriveapp/spacedrive','Cross-platform Virtual Distributed File System','productivity'],
+  ['obsproject/obs-studio','Live video streaming & screen recording suite','media'],
+  ['audacity/audacity','Multi-track audio editor, recorder and sound studio','media'],
+  ['HandBrake/HandBrake','Fast, open-source multi-format video transcoder','media'],
+  ['ShareX/ShareX','Screen capture, screen recording & productivity utility','media'],
+  ['kovidgoyal/calibre','Comprehensive e-book library manager and viewer','media'],
+  ['bitwarden/clients','Open-source encrypted password management client','security'],
+  ['keepassxreboot/keepassxc','Secure, offline cross-platform password manager','security'],
+  ['rustdesk/rustdesk','Open source remote desktop alternative to TeamViewer','security'],
+  ['cryptomator/cryptomator','Client-side zero-knowledge cloud file encryption','security'],
+  ['localsend/localsend','Cross-platform secure local file sharing (AirDrop alternative)','utilities'],
+  ['balena-io/etcher','Flash OS images to SD cards & USB drives safely','utilities'],
+  ['peazip/PeaZip','Fast archiver & file manager (7Z, RAR, TAR, ZIP, ZSTD)','utilities'],
+  ['flameshot-org/flameshot','Powerful and intuitive in-app screenshot software','utilities'],
+  ['notepad-plus-plus/notepad-plus-plus','Fast source code editor & Windows notepad replacement','utilities'],
+  ['BleachBit/bleachbit','Clean disk space, wipe cache & preserve system privacy','utilities']
+];
 const main=$('#main'),dlg=$('#dlg');let sys,rt=0;
 const toast=(m,e)=>{const t=document.createElement('div');t.className='toast'+(e?' err':'');t.setAttribute('role',e?'alert':'status');t.textContent=m;$('#toasts').append(t);setTimeout(()=>t.remove(),4500)};
 const copy=async(t,m='Copied')=>{try{await navigator.clipboard.writeText(t);toast(m)}catch{toast('Copy blocked by the browser — select the text manually.',1)}};
@@ -42,11 +70,16 @@ const go=(f,h)=>{location.hash=h||'#/r/'+f};
 const fail=(e,f)=>{main.innerHTML=`<div class="err" role="alert"><h2>Couldn’t load ${esc(f||'data')}</h2><p>${esc(e.message)}</p><div class="row"><a class="btn" href="#/">Back home</a><button class="btn" id="retry">Try again</button></div></div>`;$('#retry').onclick=route;$('#live').textContent='Error: '+e.message};
 const card=(f,d)=>`<a class="card" href="#/r/${esc(f)}"><img src="${esc(av(f))}" alt="" width="40" height="40" loading="lazy"><div><b>${esc(f.split('/')[1])}</b><span>${esc(d||'')}</span></div></a>`;
 function home(){
+  let curCat='all';
   const rc=hist().filter((x,i,a)=>x.k!=='zip'&&a.findIndex(y=>y.hash===x.hash&&y.k!=='zip')===i).slice(0,6);
+  const renderGrid=c=>FEAT.filter(x=>c==='all'||x[2]===c).map(x=>card(x[0],x[1])).join('');
   main.innerHTML=`<section class="hero"><h1>The right GitHub download, instantly</h1><p>Paste a repository or search by name. GitGet picks the installer for your system, shows its checksum and keeps track of updates.</p>
 <form id="sf" role="search"><div class="sbox"><input id="q" type="search" role="combobox" aria-expanded="false" aria-controls="sg" aria-autocomplete="list" placeholder="owner/repo, GitHub URL or app name   ( / )" autocomplete="off" spellcheck="false" aria-label="Search GitHub repositories"><button class="btn pri">Find</button></div><ul id="sg" role="listbox" aria-label="Suggestions" hidden></ul></form>
 ${rc.length?`<div class="chips" aria-label="Recent">${rc.map(x=>`<a href="${esc(x.hash)}">${esc(x.label||x.full)}</a>`).join('')}<button class="lnk" id="clr">Clear</button></div>`:''}</section>
-<div id="res"></div><h2>Popular apps</h2><div class="grid">${FEAT.map(x=>card(...x)).join('')}</div>
+<div id="res"></div>
+<div class="row" style="justify-content:space-between;align-items:center;margin-top:2rem"><h2 style="margin:0">Popular apps</h2><span class="mut" id="app-cnt">${FEAT.length} apps</span></div>
+<div class="seg" id="cf" style="margin:.6rem 0 1.2rem" role="tablist" aria-label="Filter apps by category">${Object.entries(CATS).map(([k,l])=>`<button type="button" data-c="${k}" aria-pressed="${k===curCat}">${l}</button>`).join('')}</div>
+<div class="grid" id="ag">${renderGrid(curCat)}</div>
 <h2>How it works</h2><div class="grid"><div class="panel"><b>1. We detect</b><p class="mut">Your OS and CPU, read from your browser. Wrong? Change it from the button at the top.</p></div><div class="panel"><b>2. We match</b><p class="mut">Every release file is scored; checksums, sources and other platforms are filtered out.</p></div><div class="panel"><b>3. You download</b><p class="mut">The link goes straight to GitHub. We host nothing and track nothing.</p></div></div>`;
   const q=$('#q'),sg=$('#sg');let sel=-1,items=[],tm,seq=0;
   const hide=()=>{sg.hidden=true;q.setAttribute('aria-expanded','false');sel=-1};
@@ -59,6 +92,14 @@ ${rc.length?`<div class="chips" aria-label="Recent">${rc.map(x=>`<a href="${esc(
   q.onblur=()=>setTimeout(hide,120);
   $('#sf').onsubmit=async e=>{e.preventDefault();const v=q.value.trim();if(!v)return;const d=api.target(v);if(d)return go(d.full,d.hash);
     $('#res').innerHTML='<div class="sk"><i></i></div>';try{const r=await api.search(v);$('#res').innerHTML=r.items.length?`<h2>Results for “${esc(v)}”</h2><div class="grid">${r.items.map(i=>card(i.full_name,i.description)).join('')}</div>`:'<p class="note">No repositories found.</p>'}catch(x){$('#res').innerHTML=`<p class="err" role="alert">${esc(x.message)}</p>`}};
+  $('#cf')?.addEventListener('click',e=>{
+    const b=e.target.closest('button');if(!b)return;
+    curCat=b.dataset.c;
+    $$('#cf button').forEach(x=>x.setAttribute('aria-pressed',x===b?'true':'false'));
+    const list=FEAT.filter(x=>curCat==='all'||x[2]===curCat);
+    $('#ag').innerHTML=list.map(x=>card(x[0],x[1])).join('');
+    $('#app-cnt').textContent=`${list.length} app${list.length===1?'':'s'}`;
+  });
   $('#clr')?.addEventListener('click',()=>{setHist([]);home()});
 }
 async function detail(full,t){
