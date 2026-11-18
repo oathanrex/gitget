@@ -55,7 +55,8 @@ const FEAT=[
   ['peazip/PeaZip','Fast archiver & file manager (7Z, RAR, TAR, ZIP, ZSTD)','utilities'],
   ['flameshot-org/flameshot','Powerful and intuitive in-app screenshot software','utilities'],
   ['notepad-plus-plus/notepad-plus-plus','Fast source code editor & Windows notepad replacement','utilities'],
-  ['BleachBit/bleachbit','Clean disk space, wipe cache & preserve system privacy','utilities']
+  ['BleachBit/bleachbit','Clean disk space, wipe cache & preserve system privacy','utilities'],
+  ['termux/termux-app','Android terminal emulator & Linux environment','utilities']
 ];
 
 const main=$('#main'),dlg=$('#dlg');let sys,rt=0;
