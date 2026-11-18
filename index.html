@@ -1,19 +1,111 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self';img-src 'self' data: https://avatars.githubusercontent.com https://raw.githubusercontent.com;connect-src 'self' https://api.github.com https://raw.githubusercontent.com https://gist.githubusercontent.com;object-src 'none';base-uri 'self';form-action 'self'">
-<title>GitGet – Download the right GitHub release for your device</title>
-<meta name="description" content="Paste any GitHub repo and GitGet picks the right installer for your OS and CPU, shows SHA-256 checksums and tracks updates. Free, no sign-up, no tracking.">
-<meta name="theme-color" content="#1a56db"><meta name="author" content="Oathan Rex">
-<meta name="google-site-verification" content="5hxLY84z6lG9_NzHmw2XZzq8nD0N1M-Xa219T2eCLSc" />
-<meta property="og:title" content="GitGet – The right GitHub download, instantly"><meta property="og:description" content="Auto-detects your OS and CPU, verifies checksums, tracks updates."><meta property="og:type" content="website"><meta property="og:url" content="https://oathanrex.github.io/gitget/"><meta property="og:image" content="https://oathanrex.github.io/gitget/assets/og-image.png"><meta property="og:image:type" content="image/png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="GitGet — the right GitHub download for your device, instantly"><meta name="twitter:image" content="https://oathanrex.github.io/gitget/assets/og-image.png"><meta name="twitter:card" content="summary_large_image">
-<link rel="canonical" href="https://oathanrex.github.io/gitget/"><link rel="preconnect" href="https://api.github.com" crossorigin><link rel="modulepreload" href="js/app.js"><link rel="modulepreload" href="js/api.js"><link rel="modulepreload" href="js/store.js"><link rel="modulepreload" href="js/detect.js"><link rel="modulepreload" href="js/match.js"><link rel="modulepreload" href="js/files.js"><link rel="modulepreload" href="js/tree.js"><link rel="modulepreload" href="js/cmd.js"><link rel="modulepreload" href="js/zip.js"><link rel="modulepreload" href="js/preview.js"><link rel="modulepreload" href="js/md.js"><link rel="modulepreload" href="js/views.js"><link rel="modulepreload" href="js/gist.js"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="assets/icon.svg" type="image/svg+xml"><link rel="stylesheet" href="css/app.css">
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"GitGet","applicationCategory":"UtilitiesApplication","operatingSystem":"Any (web)","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"author":{"@type":"Person","name":"Oathan Rex"},"url":"https://oathanrex.github.io/gitget/"}</script>
-</head><body>
-<a class="skip" href="#main">Skip to content</a>
-<header class="bar"><a class="logo" href="#/"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M21 16V8l-9-5-9 5v8l9 5 9-5zM3.3 7 12 12l8.7-5M12 22V12"/></svg>GitGet</a>
-<nav aria-label="Main"><a href="#/" data-r="home">Home</a><a href="#/library" data-r="library">Library <b id="badge" hidden>0</b></a></nav>
-<div class="acts"><button class="btn" id="sys" aria-label="Change target system">…</button><button class="btn ib" id="hst" aria-label="History">🕘</button><button class="btn ib" id="theme" aria-label="Switch theme">◐</button><button class="btn ib" id="cfg" aria-label="Settings">⚙</button></div></header>
-<main id="main" tabindex="-1"><noscript><p class="note">GitGet needs JavaScript to query GitHub's API.</p></noscript></main>
-<footer><p>GitGet hosts no files — every download comes straight from GitHub. No tracking, no cookies. <a href="https://github.com/oathanrex/gitget" rel="noopener">Source</a> · <a href="https://www.buymeacoffee.com/oathanrex" rel="noopener">☕ Support</a></p><p id="rl" class="mut" role="status"></p></footer>
-<dialog id="dlg" aria-label="Dialog"></dialog><div id="live" class="sr" aria-live="polite"></div><div id="toasts"></div>
-<script type="module" src="js/app.js"></script></body></html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self';img-src 'self' data: https://avatars.githubusercontent.com https://raw.githubusercontent.com;connect-src 'self' https://api.github.com https://raw.githubusercontent.com https://gist.githubusercontent.com;object-src 'none';base-uri 'self';form-action 'self'">
+    
+    <title>GitGet – The Right GitHub Release for Your Device, Instantly</title>
+    <meta name="description" content="Paste any GitHub repository or search open-source apps. GitGet auto-detects your OS & CPU architecture, highlights compatible installers, verifies SHA-256 checksums, and tracks updates. Free, 100% client-side, zero tracking.">
+    <meta name="theme-color" content="#0969da">
+    <meta name="author" content="Oathan Rex">
+    <meta name="google-site-verification" content="5hxLY84z6lG9_NzHmw2XZzq8nD0N1M-Xa219T2eCLSc" />
+    
+    <!-- OpenGraph & Twitter -->
+    <meta property="og:title" content="GitGet – The Right GitHub Release for Your Device">
+    <meta property="og:description" content="Auto-detects your OS and CPU, verifies checksums, tracks updates with zero tracking.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://oathanrex.github.io/gitget/">
+    <meta property="og:image" content="https://oathanrex.github.io/gitget/assets/og-image.png">
+    <meta property="og:image:type" content="image/png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="GitGet — the right GitHub download for your device, instantly">
+    <meta name="twitter:image" content="https://oathanrex.github.io/gitget/assets/og-image.png">
+    <meta name="twitter:card" content="summary_large_image">
+    
+    <link rel="canonical" href="https://oathanrex.github.io/gitget/">
+    <link rel="preconnect" href="https://api.github.com" crossorigin>
+    <link rel="modulepreload" href="js/icons.js">
+    <link rel="modulepreload" href="js/app.js">
+    <link rel="modulepreload" href="js/api.js">
+    <link rel="modulepreload" href="js/store.js">
+    <link rel="modulepreload" href="js/detect.js">
+    <link rel="modulepreload" href="js/match.js">
+    <link rel="modulepreload" href="js/files.js">
+    <link rel="modulepreload" href="js/tree.js">
+    <link rel="modulepreload" href="js/cmd.js">
+    <link rel="modulepreload" href="js/zip.js">
+    <link rel="modulepreload" href="js/preview.js">
+    <link rel="modulepreload" href="js/md.js">
+    <link rel="modulepreload" href="js/views.js">
+    <link rel="modulepreload" href="js/gist.js">
+    
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="css/app.css">
+    
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "GitGet",
+        "applicationCategory": "UtilitiesApplication",
+        "operatingSystem": "Any (Web Browser)",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+        "author": { "@type": "Person", "name": "Oathan Rex" },
+        "url": "https://oathanrex.github.io/gitget/"
+      }
+    </script>
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to main content</a>
+    
+    <header class="bar">
+      <a class="logo" href="#/" aria-label="GitGet Home">
+        <svg width="22" height="22" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M2 2.5A2.5 2.5 0 0 1 4.5 0h8.75a.75.75 0 0 1 .75.75v12.5a.75.75 0 0 1-.75.75h-2.5a.75.75 0 0 1 0-1.5h1.75v-2h-8a1 1 0 0 0-.714 1.7.75.75 0 1 1-1.072 1.05A2.495 2.495 0 0 1 2 11.5Zm10.5-1h-8a1 1 0 0 0-1 1v6.708A2.486 2.486 0 0 1 4.5 9h8ZM5 12.25a.25.25 0 0 1 .25-.25h3.5a.25.25 0 0 1 .25.25v3.25a.25.25 0 0 1-.4.2l-1.6-1.2-1.6 1.2a.25.25 0 0 1-.4-.2Z"/></svg>
+        <span>GitGet</span>
+      </a>
+      
+      <nav aria-label="Main Navigation">
+        <a href="#/" data-r="home">Home</a>
+        <a href="#/library" data-r="library">My Library <b id="badge" hidden>0</b></a>
+      </nav>
+      
+      <div class="acts">
+        <button class="btn" id="sys" aria-label="Target platform selector">
+          <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M0 2.274 6.545 1.38v6.236H0V2.274Zm0 6.012h6.545v6.334L0 13.726V8.286ZM7.273 1.28 16 0v7.616H7.273V1.28Zm0 7.006H16V16l-8.727-1.28V8.286Z"/></svg>
+          <span>System</span>
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="m4.427 6.427 3.396 3.396a.25.25 0 0 0 .354 0l3.396-3.396A.25.25 0 0 0 11.396 6H4.604a.25.25 0 0 0-.177.427Z"/></svg>
+        </button>
+        <button class="btn ib" id="hst" aria-label="View history" title="Search and download history">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="m.427 1.927 1.215 1.215a8.002 8.002 0 1 1-1.6 5.685.75.75 0 1 1 1.493-.154 6.5 6.5 0 1 0 1.18-4.458l1.358 1.358A.25.25 0 0 1 3.896 6H.25A.25.25 0 0 1 0 5.75V2.104a.25.25 0 0 1 .427-.177ZM7.75 4a.75.75 0 0 1 .75.75v2.992l2.028.812a.75.75 0 0 1-.557 1.389l-2.5-1A.75.75 0 0 1 7 8.25v-3.5A.75.75 0 0 1 7.75 4Z"/></svg>
+        </button>
+        <button class="btn ib" id="theme" aria-label="Switch appearance theme" title="Toggle theme">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 12a4 4 0 1 1 0-8 4 4 0 0 1 0 8Zm0-1.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Zm5.657-8.157a.75.75 0 0 1 0 1.06l-.707.708a.75.75 0 0 1-1.06-1.061l.707-.707a.75.75 0 0 1 1.06 0Zm-9.193 9.192a.75.75 0 0 1 0 1.061l-.707.707a.75.75 0 0 1-1.06-1.06l.707-.708a.75.75 0 0 1 1.06 0ZM8 0a.75.75 0 0 1 .75.75v1a.75.75 0 0 1-1.5 0v-1A.75.75 0 0 1 8 0Zm0 13.5a.75.75 0 0 1 .75.75v1a.75.75 0 0 1-1.5 0v-1a.75.75 0 0 1 .75-.75Zm5.657 2.157a.75.75 0 0 1-1.06 0l-.708-.707a.75.75 0 0 1 1.06-1.06l.708.707a.75.75 0 0 1 0 1.06ZM3.107 3.814a.75.75 0 0 1-1.06-1.06l.707-.708a.75.75 0 0 1 1.06 1.06l-.707.708ZM16 8a.75.75 0 0 1-.75.75h-1a.75.75 0 0 1 0-1.5h1A.75.75 0 0 1 16 8ZM2.5 8a.75.75 0 0 1-.75.75h-1a.75.75 0 0 1 0-1.5h1A.75.75 0 0 1 2.5 8Z"/></svg>
+        </button>
+        <button class="btn ib" id="cfg" aria-label="Settings" title="Configure settings">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0a8.2 8.2 0 0 1 .701.031C9.444.095 9.99.645 10.16 1.29l.288 1.107c.377.098.733.25 1.062.45l.99-.548c.594-.33 1.342-.157 1.748.406l.01.014a8.267 8.267 0 0 1 1.062 1.838c.28.618.064 1.348-.485 1.746l-.886.643c.078.384.103.782.073 1.182l.93.578c.57.354.832 1.064.604 1.705a8.274 8.274 0 0 1-1.063 1.838c-.407.564-1.155.736-1.75.405l-.988-.548c-.33.2-.686.352-1.063.45l-.288 1.107c-.17.645-.716 1.195-1.459 1.259A8.196 8.196 0 0 1 8 16a8.2 8.2 0 0 1-.701-.031c-.744-.064-1.29-.614-1.46-1.259l-.287-1.107c-.378-.098-.734-.25-1.063-.45l-.99.548c-.593.33-1.34.158-1.747-.405l-.01-.015a8.267 8.267 0 0 1-1.063-1.838c-.28-.618-.063-1.348.485-1.746l.886-.643a4.996 4.996 0 0 1-.073-1.182l-.93-.578c-.57-.354-.832-1.064-.604-1.705.3-1.055 1.063-1.838 1.063-1.838.406-.563 1.154-.736 1.749-.405l.988.548c.33-.2.685-.352 1.063-.45l.288-1.107C6.71.645 7.256.095 8 0Zm0 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5Z"/></svg>
+        </button>
+      </div>
+    </header>
+    
+    <main id="main" tabindex="-1">
+      <noscript>
+        <p class="note">GitGet requires JavaScript to query GitHub's public API directly.</p>
+      </noscript>
+    </main>
+    
+    <footer>
+      <p>GitGet hosts no binaries — every download link connects straight to GitHub Releases. No telemetry, no tracking cookies.</p>
+      <p><a href="https://github.com/oathanrex/gitget" rel="noopener">Source Code on GitHub</a> · <a href="https://www.buymeacoffee.com/oathanrex" rel="noopener">Support Project</a></p>
+      <p id="rl" class="mut" role="status"></p>
+    </footer>
+    
+    <dialog id="dlg" aria-label="System dialog"></dialog>
+    <div id="live" class="sr" aria-live="polite"></div>
+    <div id="toasts"></div>
+    
+    <script type="module" src="js/app.js"></script>
+  </body>
+</html>
