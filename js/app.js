@@ -15,7 +15,7 @@ const toast=(m,e)=>{const t=document.createElement('div');t.className='toast'+(e
 const copy=async(t,m='Copied')=>{try{await navigator.clipboard.writeText(t);toast(m)}catch{toast('Copy blocked by the browser — select the text manually.',1)}};
 const sysText=()=>LABEL[sys.os]+' · '+ARCHL[sys.arch];
 const paintSys=()=>{$('#sys').textContent=sysText()};
-const modal=(t,b,m)=>{dlg.innerHTML=`<form method="dialog" class="dh"><h2>${t}</h2><button class="x" aria-label="Close">×</button></form><div class="db">${b}</div>`;m&&m();dlg.open||dlg.showModal()};
+const modal=(t,b,m)=>{dlg.setAttribute('aria-label',t);dlg.innerHTML=`<form method="dialog" class="dh"><h2>${t}</h2><button class="x" aria-label="Close">×</button></form><div class="db">${b}</div>`;m&&m();dlg.open||dlg.showModal()};
 dlg.addEventListener('click',e=>{if(e.target===dlg)dlg.close()});
 const seg=(id,vals,L,cur)=>`<div class="seg" id="${id}">${vals.map(v=>`<button type="button" data-v="${v}" aria-pressed="${v===cur}">${esc(L?L[v]:v)}</button>`).join('')}</div>`;
 const segBind=(id,fn)=>{$('#'+id,dlg).onclick=e=>{const b=e.target.closest('button');if(!b)return;fn(b.dataset.v);$$('button',e.currentTarget).forEach(x=>x.setAttribute('aria-pressed',x===b))}};
@@ -50,7 +50,7 @@ ${rc.length?`<div class="chips" aria-label="Recent">${rc.map(x=>`<a href="${esc(
 <h2>How it works</h2><div class="grid"><div class="panel"><b>1. We detect</b><p class="mut">Your OS and CPU, read from your browser. Wrong? Change it from the button at the top.</p></div><div class="panel"><b>2. We match</b><p class="mut">Every release file is scored; checksums, sources and other platforms are filtered out.</p></div><div class="panel"><b>3. You download</b><p class="mut">The link goes straight to GitHub. We host nothing and track nothing.</p></div></div>`;
   const q=$('#q'),sg=$('#sg');let sel=-1,items=[],tm,seq=0;
   const hide=()=>{sg.hidden=true;q.setAttribute('aria-expanded','false');sel=-1};
-  const show=(a,msg)=>{items=a;sel=-1;sg.innerHTML=a.length?a.map((x,i)=>`<li role="option" id="o${i}" data-f="${esc(x.f)}" data-h="${esc(x.h||'')}">${esc(x.f)}${x.d?`<small>${esc(x.d)}</small>`:''}</li>`).join(''):`<li role="option" aria-disabled="true">${esc(msg||'No matches')}</li>`;sg.hidden=false;q.setAttribute('aria-expanded','true')};
+  const show=(a,msg)=>{items=a;sel=-1;sg.innerHTML=a.length?a.map((x,i)=>`<li role="option" id="o${i}" data-f="${esc(x.f)}" data-h="${esc(x.h||'')}">${esc(x.f)}${x.d?`<small>${esc(x.d)}</small>`:''}</li>`).join(''):`<li role="option" aria-disabled="true">${esc(msg||'No matches')}</li>`;sg.hidden=false;q.setAttribute('aria-expanded','true');$('#live').textContent=a.length?a.length+' suggestion'+(a.length>1?'s':'')+' available':(msg||'No matches')};
   q.oninput=()=>{clearTimeout(tm);const v=q.value.trim();if(v.length<2)return hide();const d=api.target(v);
     if(d)return show([{f:d.full||'Gist '+d.id.slice(0,8)+'…',h:d.hash,d:d.kind==='gist'?'Open gist':d.kind==='files'?'Browse files'+(d.path?' in '+d.path:''):'Open this repository'}]);
     tm=setTimeout(async()=>{const n=++seq;try{const r=await api.search(v);if(n===seq)show(r.items.map(i=>({f:i.full_name,d:i.description})))}catch(e){if(n===seq)show([],e.message)}},450)};
@@ -100,13 +100,14 @@ function library(t){
   $('#imp').onchange=async e=>{try{const j=JSON.parse(await e.target.files[0].text()),have=new Set(lib().map(x=>x.full)),add=(j.apps||[]).filter(x=>/^[\w.-]+\/[\w.-]+$/.test(x?.full)&&!have.has(x.full)).map(x=>({full:x.full,tag:String(x.tag||''),latest:'',desc:''}));setLib([...lib(),...add]);draw();toast('Imported '+add.length+' app(s)');if(add.length){await check(true);draw()}}catch{toast('That file isn’t a valid GitGet library.',1)}e.target.value=''};
   if(lib().some(x=>!x.checked||Date.now()-x.checked>36e5))check(false).then(()=>t===rt&&$('#ll')&&draw());
 }
+let booted=false;
 const dec=s=>{try{return decodeURIComponent(s)}catch{return s}};
 const H={$,$$,esc,main,toast,copy,fail,rec,hist:addHist,get sys(){return sys}};
 function route(){const t=++rt,h=location.hash.slice(1)||'/',m=h.match(/^\/r\/([\w.-]+\/[\w.-]+)(\/(files|releases|stats)(?:\/([^/]*))?(?:\/(.*))?)?/);
   const cur=h.startsWith('/library')?'library':'home';$$('nav a').forEach(a=>a.toggleAttribute('aria-current',a.dataset.r===cur));
   document.title='GitGet – Download the right GitHub release for your device';
   const ok=()=>t===rt;if(m&&m[3]==='files')files(H,m[1],dec(m[4]||''),dec(m[5]||''),ok);else if(m&&m[3]==='releases')releases(H,m[1],ok);else if(m&&m[3]==='stats')stats(H,m[1],ok);else if(m)detail(m[1],t);else if(/^\/g\/[0-9a-f]{20,40}/i.test(h))gist(H,h.slice(3).match(/^[0-9a-f]+/i)[0].toLowerCase(),ok);else if(h.startsWith('/library')){document.title='My Library – GitGet';library(t)}else home();
-  scrollTo(0,0)}
+  scrollTo(0,0);if(booted)main.focus({preventScroll:true});booted=true;setTimeout(()=>{if(t===rt)$('#live').textContent=document.title},500)}
 (async()=>{theme(get('gg.theme','auto'));dens(get('gg.dens','comfortable'));sys=await detect();paintSys();
   $('#sys').onclick=sysDlg;$('#hst').onclick=histDlg;$('#cfg').onclick=cfg;$('#theme').onclick=()=>{const o=['auto','light','dark'],n=o[(o.indexOf(get('gg.theme','auto'))+1)%3];theme(n);toast('Theme: '+n)};
   main.addEventListener('click',e=>{const b=e.target.closest('[data-c]');if(b)copy(b.dataset.c)});
