@@ -48,13 +48,64 @@
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
-        "@type": "SoftwareApplication",
-        "name": "GitGet",
-        "applicationCategory": "UtilitiesApplication",
-        "operatingSystem": "Any (Web Browser)",
-        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
-        "author": { "@type": "Person", "name": "Oathan Rex" },
-        "url": "https://oathanrex.github.io/gitget/"
+        "@graph": [
+          {
+            "@type": "SoftwareApplication",
+            "name": "GitGet",
+            "applicationCategory": "UtilitiesApplication",
+            "operatingSystem": "Windows, macOS, Linux, Android, iOS",
+            "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+            "author": { "@type": "Person", "name": "Oathan Rex" },
+            "url": "https://oathanrex.github.io/gitget/"
+          },
+          {
+            "@type": "WebSite",
+            "name": "GitGet",
+            "url": "https://oathanrex.github.io/gitget/",
+            "potentialAction": {
+              "@type": "SearchAction",
+              "target": "https://oathanrex.github.io/gitget/#/?q={search_term_string}",
+              "query-input": "required name=search_term_string"
+            }
+          },
+          {
+            "@type": "FAQPage",
+            "mainEntity": [
+              {
+                "@type": "Question",
+                "name": "Which GitHub release file should I download for Windows?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "For 64-bit Windows PCs (most laptops and desktops), download .exe or .msi installers ending in x64 or x86_64. For Surface Pro and Snapdragon X devices, download arm64 builds. GitGet auto-detects your system and selects the highest-scoring installer automatically."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Which Android APK should I download from GitHub releases?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "For 95%+ of modern Android phones, download the arm64-v8a.apk file. If your device is older (32-bit), choose armeabi-v7a.apk. If unsure, choose universal.apk which runs on all Android devices."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Which GitHub release file should I download for Mac (Apple Silicon vs Intel)?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "For modern Apple Macs with M1, M2, M3, or M4 chips, download arm64 or Apple Silicon .dmg or .pkg files. For older Macs, download x86_64 or Intel .dmg files. Universal .dmg packages run natively on both."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "How do I verify a GitHub release SHA-256 checksum online?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "GitGet provides a client-side WebCrypto SHA-256 verifier. Simply select or drop your downloaded file on the app page, and GitGet calculates the SHA-256 hash locally in your browser and compares it with GitHub's upstream sha256sums file."
+                }
+              }
+            ]
+          }
+        ]
       }
     </script>
   </head>
@@ -99,6 +150,41 @@
       </noscript>
     </main>
     
+    <section class="wrap seo-hub" aria-label="Frequently Asked Questions and Popular Downloads" style="margin:3rem auto 2rem;border-top:1px solid var(--bd);padding-top:2rem">
+      <h2 style="font-size:1.25rem;margin-bottom:1rem">Frequently Asked Questions</h2>
+      <details class="panel" style="margin-bottom:.5rem">
+        <summary style="font-weight:600;cursor:pointer">Which GitHub release file should I download for Windows?</summary>
+        <p style="margin-top:.5rem;color:var(--mut);line-height:1.5">For 64-bit Windows PCs (most modern laptops and desktops), choose <code>.exe</code> or <code>.msi</code> installers labeled <code>x64</code> or <code>x86_64</code>. For ARM devices (Surface Pro, Snapdragon X), choose <code>arm64</code>. GitGet auto-detects your system and selects the optimal installer.</p>
+      </details>
+      <details class="panel" style="margin-bottom:.5rem">
+        <summary style="font-weight:600;cursor:pointer">Which Android APK should I download from GitHub releases?</summary>
+        <p style="margin-top:.5rem;color:var(--mut);line-height:1.5">For 95%+ of modern Android phones, download <code>arm64-v8a.apk</code>. For older or budget 32-bit devices, choose <code>armeabi-v7a.apk</code>. If unsure, <code>universal.apk</code> runs natively on all Android devices.</p>
+      </details>
+      <details class="panel" style="margin-bottom:.5rem">
+        <summary style="font-weight:600;cursor:pointer">Which GitHub release file should I download for Mac (Apple Silicon vs Intel)?</summary>
+        <p style="margin-top:.5rem;color:var(--mut);line-height:1.5">For Apple Silicon Macs (M1, M2, M3, M4), choose <code>arm64</code> or <code>Apple Silicon</code> <code>.dmg</code> or <code>.pkg</code> packages. For older Intel Macs, choose <code>x86_64</code> or <code>Intel</code>. Universal packages run natively on both.</p>
+      </details>
+      <details class="panel" style="margin-bottom:1.5rem">
+        <summary style="font-weight:600;cursor:pointer">How do I verify a GitHub release SHA-256 checksum online?</summary>
+        <p style="margin-top:.5rem;color:var(--mut);line-height:1.5">GitGet includes an in-browser WebCrypto SHA-256 verifier. Simply drop or select your downloaded file on the app page, and GitGet calculates its SHA-256 hash locally in your browser and cross-checks it against GitHub's official <code>.sha256sums</code>.</p>
+      </details>
+
+      <h3 style="font-size:1.05rem;margin-bottom:.75rem">Popular Open-Source Software Releases</h3>
+      <div style="display:flex;flex-wrap:wrap;gap:.5rem;font-size:13px">
+        <a href="apps/termux.html" class="btn sm">Termux APK</a>
+        <a href="apps/obsidian.html" class="btn sm">Obsidian</a>
+        <a href="apps/neovim.html" class="btn sm">Neovim</a>
+        <a href="apps/vscodium.html" class="btn sm">VSCodium</a>
+        <a href="apps/godot.html" class="btn sm">Godot Engine</a>
+        <a href="apps/dbeaver.html" class="btn sm">DBeaver</a>
+        <a href="apps/obs-studio.html" class="btn sm">OBS Studio</a>
+        <a href="apps/handbrake.html" class="btn sm">HandBrake</a>
+        <a href="apps/bitwarden.html" class="btn sm">Bitwarden</a>
+        <a href="apps/keepassxc.html" class="btn sm">KeePassXC</a>
+        <a href="apps/notepad-plus-plus.html" class="btn sm">Notepad++</a>
+      </div>
+    </section>
+
     <footer>
       <p>GitGet hosts no binaries — every download link connects straight to GitHub Releases. No telemetry, no tracking cookies.</p>
       <p><a href="https://github.com/oathanrex/gitget" rel="noopener">Source Code on GitHub</a> · <a href="https://www.buymeacoffee.com/oathanrex" rel="noopener">Support Project</a></p>
